@@ -46,16 +46,25 @@ class Service:
         return f"http://{self.join_host_port('localhost', self.port)}"
 
     @staticmethod
-    def _can_still_connect(self, port, host='localhost'):
+    def _can_still_connect(port, host='localhost'):
         s = None
+        state = False
         try:
             s = socket.create_connection((host, port), 1)
+            state = True
         except socket.error:
-            return False
+            state = False
         else:
             if s:
                 s.close()
-                return False
+        print('Can still connect', state)
+        return state
+
+    def _process_is_running(self):
+        code = self.process.poll()
+        print(code)
+        if code is not None:
+            raise Exception('The service was exited')
 
     def _check_connection_state(self):
         can_connect = False
@@ -77,28 +86,38 @@ class Service:
     def start(self):
         """Start a new service"""
         print('The service was started')
+        log_file = open(os.devnull, 'rb')
         cmd = [self.executable, f'--port={self.port}']
         try:
             self.process = Popen(
                 cmd, env=self.environ, 
-                    close_fds=platform.system(), 
-                        stdout=None, stderr=None, stdin=PIPE
+                    close_fds=True if platform.system() != 'Windows' else False, 
+                        stdout=log_file, stderr=log_file, stdin=PIPE
             )
         except TypeError:
             raise
         except OSError as e:
             if e.errno == errno.ENOENT:
-                pass
+                raise Exception('The executable could not be accessed')
             elif e.errno == errno.EACCES:
-                pass
+                raise Exception('Does the executable have the appropritate access rights?')
             else:
                 raise
         except Exception:
             raise
+        
+        count = 0
 
         while True:
-            print('Service is running')
+            self._process_is_running()
+            if self._can_still_connect(self.port):
+                break
+            count += 1
             time.sleep(1)
+            if count == 5:
+                raise Exception('Cannot connect to service')
+
+            print('Service is running')
 
     def stop(self):
         """Stop the current service"""

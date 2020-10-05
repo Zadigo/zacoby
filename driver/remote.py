@@ -1,7 +1,8 @@
 from urllib.parse import urljoin, urlparse, urlunparse
+from zacoby.utils.utils import test_socket_connection, get_available_ip, join_host_and_port
 
 import requests
-
+import base64
 
 class RemoteConnection:
     """ 
@@ -56,11 +57,35 @@ class RemoteConnection:
 
             - dict:  the status code with the reponse data
         """
-        method, path = command
-        print(cls, method, path)
-        return cls._request(cls, method, cls._build_url(cls, path))
+        command_name, method_and_path = command
+        print("Running the following command", command_name, method_and_path)
+        return cls._request(cls, method_and_path[-0], cls._build_url(cls, method_and_path[-1]))
 
-    def _request(self, method, url):
+    def _get_headers(self, parsed_url, keep_alive=False):
+        base = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json;charset=UTF-8',
+            'User-Agent': 'Zacoby (python)'
+        }
+
+        if parsed_url.username:
+            authentication = f'{parsed_url.username}:{parsed_url.password}'.encode()
+            base.update(
+                {
+                    'Authorization': f'Basic {authentication}'
+                }
+            )
+
+        if keep_alive:
+            base.update(
+                {
+                    'Connection': 'keep-alive'
+                }
+            )
+
+        return base
+
+    def _request(self, method, url, **kwargs):
         """
         Send an HTTP request to the remote server and
         return a valid response
@@ -81,23 +106,16 @@ class RemoteConnection:
         """
         headers = None
         response = None
+        print('Trying to send request to', method, 'to', url)
+
+        headers = self._get_headers()
+
         try:
-            from requests.models import Response
-            response = Response()
-            response.headers = {
-                'Content-Type': 'text/html'
-            }
-            response.status_code = 200
-            with open('D:\\coding\\personnal\\zacoby\\response.html', 'rb') as f:
-                response.content = f.read()
-                
-            print('A request was sent using', method, 'to', url)
+            if method == 'GET':
+                response = requests.get(url, body={}, headers={})
 
-            # if method == 'GET':
-            #     response = requests.get(url, body={}, headers={})
-
-            # if method == 'POST':
-            #     response = requests.post(url, body={}, headers={})
+            if method == 'POST':
+                response = requests.post(url, body={}, headers={})
         except:
             pass
         else:
@@ -112,8 +130,6 @@ class RemoteConnection:
                 return dict(status=0, value=response_data)
         finally:
             response.close()
-            print('Response was closed')
-
 
     def _init(self, resolve_ip=True):
         """Initializes the remote connection in
@@ -128,32 +144,32 @@ class RemoteConnection:
             parsed_url = urlparse(self.remote_server_address)
             if parsed_url.hostname and resolve_ip:
                 port = parsed_url.port or None
-                ip = None
-                if parsed_url.scheme == 'https':
-                    ip = parsed_url.hostname
-                elif ip == 'is not connectable':
-                    pass
-                else:
-                    ip = 'find an IP to which we can connect'
+                ip_address = None
 
-                netloc = 'join ip and parsed_url.port'
+                if parsed_url.scheme == 'https':
+                    ip_address = parsed_url.hostname
+                elif port and not test_socket_connection(parsed_url.hostname, port):
+                    print('Could not connect to port on host >> LOG')
+                else:
+                    ip_address = get_available_ip(parsed_url.hostname, port=port)
+                
+                netloc = join_host_and_port(ip_address, port)
 
                 authentication = ''
                 if parsed_url.username:
-                    authentication = parsed_url.username
-                    if parsed_url.password:
-                        authentication += f':{parsed_url.password}'
-                    netloc = f'{authentication}@{netloc}'
+                    pass
+                   
                 remote_server_address = urlunparse(
-                    (parsed_url.scheme, netloc, parsed_url.path,
-                        parsed_url.params, parsed_url.query,
-                        parsed_url.fragment)
+                    (
+                        parsed_url.scheme, 
+                        netloc, 
+                        parsed_url.path,
+                        parsed_url.params, 
+                        parsed_url.query,
+                        parsed_url.fragment
+                    )
                 )
                 self.url = remote_server_address
-            else:
-                pass
-        else:
-            pass
     
     def _build_url(self, path_or_command):
         """
