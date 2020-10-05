@@ -44,9 +44,9 @@ class RemoteConnection:
         return cls()
 
     @classmethod
-    def _run_command(cls, command, **kwargs):
+    def _execute_command(cls, command, **kwargs):
         """
-        Run a command with the remote which sends
+        Excute the command with the remote which sends
         a request using a W3C complient path
         -----
 
@@ -63,7 +63,7 @@ class RemoteConnection:
         """
         command_name, method_and_path = command
         print("Running the following command", command_name, method_and_path)
-        return cls._request(cls, method_and_path[-0], cls._build_url(cls, method_and_path[-1]))
+        return cls._request(cls, method_and_path[-0], cls._build_url(cls, method_and_path[-1]), **kwargs)
 
     def _get_headers(self, keep_alive=False):
         base = {
@@ -114,7 +114,7 @@ class RemoteConnection:
         print('Trying to send request to', method, 'to', url)
 
         response = None
-        headers = self._get_headers()
+        headers = self._get_headers(self)
 
         if 'capabilities' in kwargs:
             capabilities = kwargs.pop('capabilities')

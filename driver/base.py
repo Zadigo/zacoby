@@ -75,7 +75,7 @@ class BaseDriver(metaclass=Zacoby):
         self.quit()
 
     def _run_command(self, command, **kwargs):
-        response = self.new_remote_connection._run_command(command, **kwargs)
+        response = self.new_remote_connection._execute_command(command, **kwargs)
         if response:
             return response
         return dict(success=0, value=None, sesssion_id=None)
@@ -101,7 +101,7 @@ class BaseDriver(metaclass=Zacoby):
             # 'desiredCapabilities': capabilities
         }
 
-        response = self._run_command(BrowserCommands.NEW_SESSION, kwargs=parameters)
+        response = self._run_command(BrowserCommands.NEW_SESSION, **parameters)
         if 'sessionId' not in response:
             pass
 
