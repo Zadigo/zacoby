@@ -1,8 +1,12 @@
+import base64
 from urllib.parse import urljoin, urlparse, urlunparse
 from zacoby.utils.utils import test_socket_connection, get_available_ip, join_host_and_port
 
 import requests
-import base64
+from zacoby.exceptions import errors
+from zacoby.utils.utils import (get_available_ip, join_host_and_port,
+                                test_socket_connection)
+
 
 class RemoteConnection:
     """ 
@@ -135,6 +139,8 @@ class RemoteConnection:
 
                 return dict(status=0, value=response_data)
         finally:
+            if response is None:
+                raise errors.NoResponseError()
             response.close()
 
     def _init(self, resolve_ip=True):
