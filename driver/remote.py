@@ -62,7 +62,7 @@ class RemoteConnection:
         print("Running the following command", command_name, method_and_path)
         return cls._request(cls, method_and_path[-0], cls._build_url(cls, method_and_path[-1]))
 
-    def _get_headers(self, parsed_url, keep_alive=False):
+    def _get_headers(self, keep_alive=False):
         base = {
             'Accept': 'application/json',
             'Content-Type': 'application/json;charset=UTF-8',
@@ -86,7 +86,7 @@ class RemoteConnection:
 
         return base
 
-    def _request(self, method, url, **kwargs):
+    def _request(self, method, url, body:dict = {}, **kwargs):
         """
         Send an HTTP request to the remote server and
         return a valid response
@@ -113,15 +113,20 @@ class RemoteConnection:
         response = None
         headers = self._get_headers()
 
+        if 'capabilities' in kwargs:
+            capabilities = kwargs.pop('capabilities')
+            body = {**capabilities, **body}
+
         if 'headers' in kwargs:
             headers = {**headers, **kwargs['headers']}
 
+
         try:
             if method == 'GET':
-                response = requests.get(url, body={}, headers=headers)
+                response = requests.get(url, headers=headers)
 
             if method == 'POST':
-                response = requests.post(url, body={}, headers=headers)
+                response = requests.post(url, body=body, headers=headers)
         except:
             pass
         else:

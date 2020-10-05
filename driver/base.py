@@ -49,9 +49,6 @@ class BaseDriver(metaclass=Zacoby):
         remote_server_address = f'http://localhost:{self.port}'
         self.new_remote_connection = RemoteConnection.as_class(remote_server_address)
 
-        # Optionnal
-        # self.start_client()
-
         self.start_session(self.capabilities, None)
 
     def __repr__(self):
@@ -83,14 +80,10 @@ class BaseDriver(metaclass=Zacoby):
             return response
         return dict(success=0, value=None, sesssion_id=None)
 
-    # def start_client(self):
-    #     print('Do something before calling the session - start')
-
-    # def stop_client(self):
-    #     print('Do something after stoppin the session - stop')
-
     def start_session(self, capabilities, browser_profile):
-        """Start a new session using the the provided capabilities
+        """
+        Start a new browser session using the
+        provided capabilities
 
         Parameters
         ----------
@@ -104,8 +97,8 @@ class BaseDriver(metaclass=Zacoby):
             pass
 
         parameters = {
-            'capabilities': None,
-            'desiredCapabilities': capabilities
+            'capabilities': capabilities
+            # 'desiredCapabilities': capabilities
         }
 
         response = self._run_command(BrowserCommands.NEW_SESSION, kwargs=parameters)
