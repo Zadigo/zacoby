@@ -18,6 +18,7 @@ class RemoteConnection:
     based on a W3C compliant path e.g. /get/sessionId
     """
     url = None
+    parsed_url = None
     remote_server_address = None
 
     @classmethod
@@ -68,8 +69,8 @@ class RemoteConnection:
             'User-Agent': 'Zacoby (python)'
         }
 
-        if parsed_url.username:
-            authentication = f'{parsed_url.username}:{parsed_url.password}'.encode()
+        if self.parsed_url.username:
+            authentication = f'{self.parsed_url.username}:{self.parsed_url.password}'.encode()
             base.update(
                 {
                     'Authorization': f'Basic {authentication}'
@@ -99,23 +100,28 @@ class RemoteConnection:
 
             - url (str): the url to use for the request
 
+            - headers (dict): extra headers to use with the
+              base headers
+
         Returns
         -------
 
             - dict:  the status code with the reponse data
         """
-        headers = None
-        response = None
         print('Trying to send request to', method, 'to', url)
 
+        response = None
         headers = self._get_headers()
+
+        if 'headers' in kwargs:
+            headers = {**headers, **kwargs['headers']}
 
         try:
             if method == 'GET':
-                response = requests.get(url, body={}, headers={})
+                response = requests.get(url, body={}, headers=headers)
 
             if method == 'POST':
-                response = requests.post(url, body={}, headers={})
+                response = requests.post(url, body={}, headers=headers)
         except:
             pass
         else:
@@ -142,6 +148,7 @@ class RemoteConnection:
         """
         if self.remote_server_address is not None:
             parsed_url = urlparse(self.remote_server_address)
+
             if parsed_url.hostname and resolve_ip:
                 port = parsed_url.port or None
                 ip_address = None
@@ -170,6 +177,7 @@ class RemoteConnection:
                     )
                 )
                 self.url = remote_server_address
+                self.parsed_url = parsed_url
     
     def _build_url(self, path_or_command):
         """
