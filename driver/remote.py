@@ -1,6 +1,5 @@
 import base64
 from urllib.parse import urljoin, urlparse, urlunparse
-from zacoby.utils.utils import test_socket_connection, get_available_ip, join_host_and_port
 
 import requests
 from zacoby.exceptions import errors
