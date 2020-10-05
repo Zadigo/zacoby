@@ -128,7 +128,7 @@ class BaseDriver(metaclass=Zacoby):
         # if self.capabilities is None:
         #     self.capabilities = response.get('capabilities')
 
-    def _fit_transform_capabilities(self, capabilities:dict):
+    def _fit_transform_capabilities(self, capabilities:dict, **kwargs):
         """In order to match the W3C capabilities, we have wrap it's values
         into something acceptable
 
@@ -142,14 +142,14 @@ class BaseDriver(metaclass=Zacoby):
 
             {'alwaysMatch': {'browserName': 'MicrosoftEdge', 'platformName': 'windows'}, 'firstMatch': [{}]}
         """
-        desired_capabilities = capabilities.copy()
-        desired_capabilities['platform'] = desired_capabilities['platform'].lower()
+        # desired_capabilities = capabilities.copy()
+        # desired_capabilities['platform'] = desired_capabilities['platform'].lower()
         base = {
             'capabilities': {
                 'alwaysMatch': capabilities,
                 'firstMatch': [{}]
-            },
-            'desiredCapabilities': desired_capabilities
+            }
+            # 'desiredCapabilities': desired_capabilities
         }
         return base
 
