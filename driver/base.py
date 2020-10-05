@@ -109,11 +109,11 @@ class BaseDriver(metaclass=Zacoby):
 
             - browser_profile (str): [description]
         """
-        print('New session was started using:', capabilities, browser_profile)
         if browser_profile:
             pass
 
         extended_capabilities = self._fit_transform_capabilities(capabilities)
+        print('New session was started using:', extended_capabilities)
 
         response = self._run_command(
             BrowserCommands.NEW_SESSION, capabilities=extended_capabilities
@@ -122,11 +122,11 @@ class BaseDriver(metaclass=Zacoby):
         if 'sessionId' not in response:
             pass
 
-        self.session = response['sessionId']
-        self.capabilities = response.get('value')
+        # self.session = response['sessionId']
+        # self.capabilities = response.get('value')
 
-        if self.capabilities is None:
-            self.capabilities = response.get('capabilities')
+        # if self.capabilities is None:
+        #     self.capabilities = response.get('capabilities')
 
     def _fit_transform_capabilities(self, capabilities:dict):
         """In order to match the W3C capabilities, we have wrap it's values
@@ -142,12 +142,8 @@ class BaseDriver(metaclass=Zacoby):
 
             {'alwaysMatch': {'browserName': 'MicrosoftEdge', 'platformName': 'windows'}, 'firstMatch': [{}]}
         """
-        desired_capabilities = capabilities.pop('desired_capabilities')
-        desired_capabilities.update(
-            {
-                'platform': desired_capabilities['platform'].upper()
-            }
-        )
+        desired_capabilities = capabilities.copy()
+        desired_capabilities['platform'] = desired_capabilities['platform'].lower()
         base = {
             'capabilities': {
                 'alwaysMatch': capabilities,

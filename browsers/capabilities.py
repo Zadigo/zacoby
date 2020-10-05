@@ -4,14 +4,14 @@ the features supported by a given implementation
 """
 
 CHROME = {
-    "browserName": "Chrome",
+    "browserName": "chrome",
     "version": "",
-    "platform": "windows"
+    "platform": "WINDOWS"
 }
 
 
 EDGE = {
     "browserName": "MicrosoftEdge",
     "version": "",
-    "platform": "windows"
+    "platform": "WINDOWS"
 }
