@@ -1,38 +1,28 @@
 import base64
 
-from zacoby.service.commands import BrowserCommands
+from zacoby.dom.core import DomElement
 from zacoby.dom.strategies import LocationStrategies
+from zacoby.service.commands import BrowserCommands
 
-class DomElementMixins:
+
+class ScreenShotMixins:
+    def _screen_shot(self, filename=None, as_file=False, **kwargs):
+        pass
+
+    def screen_shot_as_file(self):
+        pass
+
+    def screen_shot_as_png(self):
+        pass
+
+    def screen_shot_as_base64(self):
+        pass
+
+
+class LocationMixins:
     """ A set of various methods that can be used to
     interact with the DOM
-
-    Returns
-    -------
-
-        (dict, str, type): a response dictionnary, a value
-        or a DomElement class instance is returned
     """
-    location_strategies = LocationStrategies()
-
-    @property
-    def title(self):
-        """
-        Return the title of the current HTML document
-        """
-        command = BrowserCommands.GET_TITLE
-        session = self.session
-        response = self.new_remote_connection._execute_command(command, session=session)
-        return response.get('value', None)
-
-    @property
-    def window_size(self):
-        pass
-    
-    @property
-    def html(self):
-        return self.new_remote_connection._run_command(BrowserCommands.get('getPageSource'))
-
     def get_element_by_tag_name(self, name):
         pass
 
@@ -52,10 +42,14 @@ class DomElementMixins:
 
             - type: DomElement
         """
-        return self.new_remote_connection._run_command(
+        dict_to_update = {'session': self.session}
+        response = self.new_remote_connection._run_command(
             BrowserCommands.FIND_ELEMENT,
-            self.location_strategies.build_strategy('CSS_SELECTOR', name)
+            self.location_strategies.build_strategy(
+                'CSS_SELECTOR', name, dict_to_update=dict_to_update
+            )
         )
+        return DomElement(response)._copy(None)
 
     def _get_elements_by_id(self, name):
         pass
@@ -90,6 +84,44 @@ class DomElementMixins:
     def _get_elements_by_name(self, name, multiple=False):
         pass
 
+
+class SimpleDomMixins(LocationMixins):
+    """
+    Includes simple mixins such as locating an
+    element on the page
+    """
+
+
+class DomElementMixins(LocationMixins, ScreenShotMixins):
+    """Regroups all the mixins for the app
+
+    Returns
+    -------
+
+        (dict, str, type): a response dictionnary, a value
+        or a DomElement class instance is returned
+    """
+    dom_element = DomElement()
+    location_strategies = LocationStrategies()
+
+    @property
+    def title(self):
+        """
+        Return the title of the current HTML document
+        """
+        command = BrowserCommands.GET_TITLE
+        session = self.session
+        response = self.new_remote_connection._execute_command(command, session=session)
+        return response.get('value', None)
+
+    @property
+    def window_size(self):
+        pass
+    
+    @property
+    def html(self):
+        return self.new_remote_connection._run_command(BrowserCommands.get('getPageSource'))
+
     def back(self):
         pass
 
@@ -99,14 +131,32 @@ class DomElementMixins:
     def refresh(self):
         pass
 
-    def _screen_shot(self, filename=None, as_file=False, **kwargs):
-        pass
+    def write_skeleton(self):
+        """
+        From the current element, product a document
+        skeleton that will be rendered as a JSON file.
 
-    def screen_shot_as_file(self):
-        pass
+        Returns
+        -------
 
-    def screen_shot_as_png(self):
-        pass
+            document structure (dict)
 
-    def screen_shot_as_base64(self):
+            {
+                "html": {
+                    position: 0
+                    attrs: [],
+                    text: ""
+                },
+                "div": {
+                    position 1,
+                    attrs: [],
+                    text: ""
+                },
+                "current_item {
+                    position: 2,
+                    attrs: [],
+                    text: ""
+                }
+            }
+        """
         pass

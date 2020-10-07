@@ -1,8 +1,8 @@
 from zacoby.service.commands import BrowserCommands
-from zacoby.dom.mixins import DomElementMixins
+from zacoby.dom.mixins import SimpleDomMixins
 
 
-class DomElement(DomElementMixins):
+class DomElement(SimpleDomMixins):
     """
     This class represents a DOM element on which
     multiple other functionnalites can be run a on it.
@@ -17,7 +17,7 @@ class DomElement(DomElementMixins):
 
         parent (type): the parent tag of the element as a class
     """
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         self.parent = parent
         self.tag_name = None
 
@@ -38,6 +38,10 @@ class DomElement(DomElementMixins):
         if name == 'tag_name':
             name = name.title()
         super().__setattr__(name, value)
+
+    def _copy(self, parent):
+        instance = self.__class__(parent=parent)
+        return instance
 
     @property
     def text(self):
@@ -85,34 +89,4 @@ class DomElement(DomElementMixins):
         pass
 
     def upload(self, filename):
-        pass
-
-    def write_skeleton(self):
-        """
-        From the current element, product a document
-        skeleton that will be rendered as a JSON file.
-
-        Returns
-        -------
-
-            document structure (dict)
-
-            {
-                "html": {
-                    position: 0
-                    attrs: [],
-                    text: ""
-                },
-                "div": {
-                    position 1,
-                    attrs: [],
-                    text: ""
-                },
-                "current_item {
-                    position: 2,
-                    attrs: [],
-                    text: ""
-                }
-            }
-        """
         pass

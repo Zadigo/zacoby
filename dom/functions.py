@@ -1,8 +1,17 @@
-class Expressions:
+from zacoby.dom.core import DomElement
+from zacoby.dom.strategies import LocationStrategies
+
+
+class Functions:
     pass
 
 
-class Q:
+class Expressions(Functions):
+    def resolve(self, expression):
+        pass
+
+
+class Q(Expressions):
     def __init__(self, *expressions):
         self.element = None
 
@@ -22,4 +31,14 @@ class Q:
         pass
     
     def resolve(self):
+        pass
+
+
+class CaseIf:
+    def __init__(self, *cases, default=None):
+        pass
+
+
+class When(Expressions):
+    def __init__(self, then_statement, **ifs):
         pass
