@@ -6,12 +6,12 @@ the features supported by a given implementation
 CHROME = {
     "browserName": "Chrome",
     "version": "",
-    "platform": "WINDOWS"
+    "platform": "windows"
 }
 
 
 EDGE = {
     "browserName": "MicrosoftEdge",
     "version": "",
-    "platform": "WINDOWS"
+    "platform": "windows"
 }

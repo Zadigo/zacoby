@@ -3,7 +3,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
 from zacoby.exceptions import errors
-from zacoby.utils.utils import (get_available_ip, join_host_and_port,
+from zacoby.utils.sockets import (get_available_ip, join_host_and_port,
                                 test_socket_connection)
 
 

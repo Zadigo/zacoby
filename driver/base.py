@@ -1,7 +1,6 @@
 import socket
 
 from zacoby.browsers.capabilities import CHROME
-from zacoby.dom.mixins import DomElementMixins
 from zacoby.driver.remote import RemoteConnection
 from zacoby.driver.wait import Wait
 from zacoby.exceptions import errors
@@ -18,7 +17,24 @@ class Zacoby(type):
                 # By default, if capabilities is not set
                 # just use the default Chrome capabilities
                 setattr(new_class, 'capabilities', CHROME)
+
+        if hasattr(new_class, 'port'):
+            if getattr(new_class, 'port') is None:
+                setattr(new_class, 'port', cls.set_port())
         return new_class
+
+    @classmethod
+    def set_port(cls):
+        # If no port was provided,
+        # we have to try and find
+        # an open port
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('0.0.0.0', 0))
+        s.listen(5)
+        available_port = s.getsockname()[1]
+        s.close()
+        return available_port
+
         
 
 class BaseDriver(metaclass=Zacoby):
@@ -35,11 +51,12 @@ class BaseDriver(metaclass=Zacoby):
 
         - port (int, optional): . Defaults to None
     """
-    def __init__(self, executable, host=None, port=None):
-        self.host = host
-        self.port = port
-        self.session_id = None
+    capabilities = None
+    host = None
+    port = None
+    ssession_id = None
 
+    def __init__(self, executable):
         BrowserCommands._construct()
 
         new_service = Service(executable, self.host, self.port)
@@ -54,19 +71,19 @@ class BaseDriver(metaclass=Zacoby):
     def __repr__(self):
         return f'< {self.__class__.__name__} ([{self.session_id}]) >'
 
-    def __setattr__(self, name, value):
-        if name == 'port':
-            if value is None or value == 0:
-                # If no port was provided,
-                # we have to try and find
-                # an open port
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.bind(('0.0.0.0', 0))
-                s.listen(5)
-                port = s.getsockname()[1]
-                s.close()
-                value = port
-        super().__setattr__(name, value)
+    # def __setattr__(self, name, value):
+    #     if name == 'port':
+    #         if value is None or value == 0:
+    #             # If no port was provided,
+    #             # we have to try and find
+    #             # an open port
+    #             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #             s.bind(('0.0.0.0', 0))
+    #             s.listen(5)
+    #             port = s.getsockname()[1]
+    #             s.close()
+    #             value = port
+    #     super().__setattr__(name, value)
 
     def __enter__(self):
         return self
@@ -80,7 +97,7 @@ class BaseDriver(metaclass=Zacoby):
             return response
         return dict(success=0, value=None, sesssion_id=None)
 
-    def start_session(self, capabilities, browser_profile):
+    def start_session(self, capabilities, browser_profile=None):
         """
         Start a new browser session using the
         provided capabilities
@@ -96,12 +113,12 @@ class BaseDriver(metaclass=Zacoby):
         if browser_profile:
             pass
 
-        parameters = {
-            'capabilities': capabilities
-            # 'desiredCapabilities': capabilities
-        }
+        extended_capabilities = self._fit_transform_capabilities(capabilities)
 
-        response = self._run_command(BrowserCommands.NEW_SESSION, **parameters)
+        response = self._run_command(
+            BrowserCommands.NEW_SESSION, capabilities=extended_capabilities
+        )
+
         if 'sessionId' not in response:
             pass
 
@@ -110,6 +127,35 @@ class BaseDriver(metaclass=Zacoby):
 
         if self.capabilities is None:
             self.capabilities = response.get('capabilities')
+
+    def _fit_transform_capabilities(self, capabilities:dict):
+        """In order to match the W3C capabilities, we have wrap it's values
+        into something acceptable
+
+        Parameters
+        ----------
+
+            capabilities (dict): a dictionnary of capabilities
+
+        Returns:
+            dict: a wrapped capabilities object
+
+            {'alwaysMatch': {'browserName': 'MicrosoftEdge', 'platformName': 'windows'}, 'firstMatch': [{}]}
+        """
+        desired_capabilities = capabilities.pop('desired_capabilities')
+        desired_capabilities.update(
+            {
+                'platform': desired_capabilities['platform'].upper()
+            }
+        )
+        base = {
+            'capabilities': {
+                'alwaysMatch': capabilities,
+                'firstMatch': [{}]
+            },
+            'desiredCapabilities': desired_capabilities
+        }
+        return base
 
     def get(self, url):
         """
@@ -129,34 +175,7 @@ class BaseDriver(metaclass=Zacoby):
         self._run_command(BrowserCommands.QUIT)
         self.new_service.stop()
 
-    
-class WebDriver(DomElementMixins, BaseDriver):
-    """
-    Classes should extend this clas to implement
-    additional functionnalities
-
-    Parameters
-    ----------
-
-        - executable (str): path to the driver executable
-
-        - host (str, optional): . Defaults to None
-
-        - port (int, optional): . Defaults to None
-    """
-    capabilities = None
-
-    def __setattr__(self, name, value):
-        if name == 'capabilities':
-            if not isinstance(value, dict):
-                raise errors.CapabilitiesTypeError(
-                    'The browser capabilites should be a dictionnary'
-                )
-
-            if value is None:
-                value = CHROME
-        super().__setattr__(name, value)
-
     def wait_until(self, func, timeout, frequency=None):
         klass = Wait(self, timeout)
         return klass.start_polling(func)
+    

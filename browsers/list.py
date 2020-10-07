@@ -1,11 +1,16 @@
-from zacoby.driver.base import WebDriver
-from zacoby.browsers import capabilities
+from zacoby.browsers import capabilities as browser_capabilities
+from zacoby.dom.mixins import DomElementMixins
+from zacoby.driver.base import BaseDriver
 
-class Edge(WebDriver):
+
+class BaseBrowser(DomElementMixins, BaseDriver):
+    """Represents a browser"""
+
+class Edge(BaseBrowser):
     """Represents the Edge browser"""
-    capabilities = capabilities.EDGE
+    capabilities = browser_capabilities.EDGE
 
 
-class Chrome(WebDriver):
+class Chrome(BaseBrowser):
     """Represents the Chrome browser"""
-    capabilities = capabilities.CHROME
+    capabilities = browser_capabilities.CHROME
