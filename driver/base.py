@@ -78,8 +78,8 @@ class BaseDriver(metaclass=Zacoby):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.quit()
 
-    def _run_command(self, command, **kwargs):
-        return self.new_remote_connection._execute_command(command, **kwargs)
+    # def _run_command(self, command, **kwargs):
+    #     return self.new_remote_connection._execute_command(command, **kwargs)
 
     def start_session(self, capabilities, browser_profile=None):
         """
@@ -99,7 +99,7 @@ class BaseDriver(metaclass=Zacoby):
         extended_capabilities = self._fit_transform_capabilities(capabilities)
         print('New session was started using:', extended_capabilities)
 
-        response = self._run_command(
+        response = self.new_remote_connection._execute_command(
             BrowserCommands.NEW_SESSION, capabilities=extended_capabilities
         )
 
@@ -142,13 +142,19 @@ class BaseDriver(metaclass=Zacoby):
 
             url (str): a valid url string to get
         """
-        self._run_command(BrowserCommands.GET, session=self.session, url_to_get=url)
+        self.new_remote_connection._execute_command(
+            BrowserCommands.GET, 
+            session=self.session, 
+            url_to_get=url
+        )
 
     def quit(self):
         """
         Closes the session, the windows, the driver and the browser
         """
-        self._run_command(BrowserCommands.QUIT, session=self.session)
+        self.new_remote_connection._execute_command(
+            BrowserCommands.QUIT, session=self.session
+        )
         self.new_service.stop()
 
     def wait_until(self, func, timeout, frequency=None):

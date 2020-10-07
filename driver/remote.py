@@ -127,6 +127,10 @@ class RemoteConnection:
         headers = self._get_headers(self)
 
         try:
+            # TODO: Outside of the /session command,
+            # capabilities would be a blank {} -;
+            # still naming it capabilities would
+            # kinda counterintuitive
             capabilities = kwargs.pop('capabilities')
         except:
             capabilities = {}

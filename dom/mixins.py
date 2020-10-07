@@ -9,7 +9,7 @@ class DomElementMixins:
         """
         Return the title of the current HTML document
         """
-        response = self._run_command(BrowserCommands.get('getTitle'))
+        response = self.new_remote_connection._run_command(BrowserCommands.get('getTitle'))
         return response.get('value', None)
 
     @property
