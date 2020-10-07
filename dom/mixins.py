@@ -35,7 +35,7 @@ class LocationMixins:
         )
         return self.dom_element._copy(
             response_value=response['value'],
-            self.new_remote_connection
+            driver=self.new_remote_connection
         )
 
     def _get_elements_by_tag_name(self, name):
