@@ -1,4 +1,5 @@
 import base64
+import json
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
@@ -116,27 +117,28 @@ class RemoteConnection:
         response = None
         headers = self._get_headers(self)
 
-        if 'capabilities' in kwargs:
+        try:
             capabilities = kwargs.pop('capabilities')
-            body = {**capabilities, **body}
+        except:
+            pass
 
         if 'headers' in kwargs:
-            headers = {**headers, **kwargs['headers']}
-
+            headers = {**headers, **kwargs.pop('headers')}
 
         try:
             if method == 'GET':
                 response = requests.get(url, headers=headers)
 
             if method == 'POST':
-                response = requests.post(url, body=body, headers=headers)
+                response = requests.post(url, data=json.dumps(capabilities), headers=headers)
         except:
             pass
         else:
             if response is not None:
                 response_data = response.content.decode('utf-8')
+                print('Got response', response_data)
                 if 300 <= response.status_code <= 304:
-                    return self._request('GET', response.headers.get('locaton'))
+                    return self._request('GET', response.headers.get('location'))
 
                 if 399 < response.status_code <= 500:
                     return dict(status=response.status_code, value=response_data)
@@ -206,4 +208,4 @@ class RemoteConnection:
         """
         if isinstance(path_or_command, list):
             path_or_command = path_or_command[-1]
-        return urljoin(self.url, path_or_command)
+        return urljoin(self.remote_server_address, path_or_command)
