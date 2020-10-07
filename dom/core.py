@@ -52,7 +52,8 @@ class DomElement:
             name = name.title()
         super().__setattr__(name, value)
 
-    def _copy(self, element_id=None, element_value=None, response_value=None):
+    def _copy(self, element_id=None, element_value=None, 
+              response_value=None, **kwargs):
         """
         Create a new element instance
 
@@ -72,6 +73,7 @@ class DomElement:
             response_value=response_value
         )
         instance.session = self.session
+        instance.new_remote_connection = kwargs.get('driver', None)
         return instance
 
     @property
