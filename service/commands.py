@@ -1,5 +1,5 @@
 from zacoby.utils.datastructures.enumeration import Enum
-
+from string import Template
 
 class BrowserCommands(Enum):
     """
@@ -19,9 +19,22 @@ class BrowserCommands(Enum):
     GET_PAGE_SOURCE = ['getPageSource', ['GET', '/session/$sessionId/source']]
     GET_ELEMENT_TAG_NAME = ['getElementTagName', ['GET', '/session/$sessionId/element/$id/name']]
     GET_CURRENT_URL = ['getCurrentUrl', ['GET', '/session/$sessionId/url']]
+    GET_ELEMENT_TEXT  = ['getElementText', ['GET', '/session/$sessionId/element/$id/text']]
 
     NEW_SESSION = ['session', ['POST', '/session']]
     
     QUIT = ['quit', ['DELETE', '/session/$sessionId']]
 
     STATUS = ['GET', ['status', '/status']]
+
+    def substitute(self, command:list, session_id, element_id=None, **kwargs):
+        path = command[-1]
+
+        keys = {'session_id': session_id}
+
+        if element_id is not None:
+            keys.update({'element_id': element_id})
+
+        keys.update(kwargs)
+        new_path = Template(path).substitute(**keys)
+        return [command[-0], new_path]

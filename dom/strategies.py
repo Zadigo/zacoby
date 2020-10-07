@@ -32,5 +32,6 @@ class LocationStrategies:
         """
         selector = self.selectors[selector]
         if dict_to_update is not None:
-            return dict_to_update.update({'using': selector, 'value': value})
-        return dict(selector=selector, value=value)
+            dict_to_update.update({'strategy': {'using': selector, 'value': value}})
+            return dict_to_update
+        return {'strategy': dict(selector=selector, value=value)}

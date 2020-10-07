@@ -23,8 +23,17 @@ class LocationMixins:
     """ A set of various methods that can be used to
     interact with the DOM
     """
+    dom_element = DomElement()
+
     def get_element_by_tag_name(self, name):
-        pass
+        parameters = self.location_strategies.build_strategy(
+            'TAG_NAME', name, dict_to_update={'session': self.session}
+        )
+        response = self.new_remote_connection._execute_command(
+            BrowserCommands.FIND_ELEMENT,
+            **parameters
+        )
+        return self.dom_element._copy(response_value=response['value'])
 
     def _get_elements_by_tag_name(self, name):
         pass

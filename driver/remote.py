@@ -141,6 +141,11 @@ class RemoteConnection:
         if 'url_to_get' in kwargs:
             capabilities.update({'url': kwargs['url_to_get']})
 
+        if 'strategy' in kwargs:
+            capabilities = {
+                **kwargs.pop('strategy')
+            }
+
         try:
             if method == 'GET':
                 response = requests.get(url, headers=headers)
