@@ -1,9 +1,20 @@
 import base64
 
 from zacoby.service.commands import BrowserCommands
-
+from zacoby.dom.strategies import LocationStrategies
 
 class DomElementMixins:
+    """ A set of various methods that can be used to
+    interact with the DOM
+
+    Returns
+    -------
+
+        (dict, str, type): a response dictionnary, a value
+        or a DomElement class instance is returned
+    """
+    location_strategies = LocationStrategies()
+
     @property
     def title(self):
         """
@@ -20,34 +31,36 @@ class DomElementMixins:
     
     @property
     def html(self):
-        return self._run_command(BrowserCommands.get('getPageSource'))
+        return self.new_remote_connection._run_command(BrowserCommands.get('getPageSource'))
 
-    def get_element_by_tag_name(self, name, multiple=False):
+    def get_element_by_tag_name(self, name):
         pass
 
     def _get_elements_by_tag_name(self, name):
         pass
 
-    def get_element_by_id(self, name, multiple=False):
-        return self._run_command(BrowserCommands.get(''))
+    def get_element_by_id(self, name):
+        """Find the first element that matches the given in ID
+
+        Parameters
+        ----------
+
+            - name (str): name of the ID to find
+
+        Returns
+        -------
+
+            - type: DomElement
+        """
+        return self.new_remote_connection._run_command(
+            BrowserCommands.FIND_ELEMENT,
+            self.location_strategies.build_strategy('CSS_SELECTOR', name)
+        )
 
     def _get_elements_by_id(self, name):
         pass
 
-    def get_element_by_class(self, name, multiple=False):
-        """
-        Get an element in the DOM by it's class name
-
-        -----
-        
-        Parameters
-        ----------
-
-            - name (str): the name within the tag
-
-            - multiple (bool, optional): determines whether it should return 
-              multiple matching tags. Defaults to False.
-        """
+    def get_element_by_class(self, name):
         pass
 
     def _get_elements_by_class(self, name):

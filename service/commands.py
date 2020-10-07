@@ -8,10 +8,14 @@ class BrowserCommands(Enum):
     retrieve elements
     """
     CLOSE = ['close', ['DELETE', '/session/$sessionId/window']]
+
+    FIND_ELEMENT = ['findElement', ['POST', '/session/$sessionId/element']]
+    FIND_ELEMENTS = ['findElement', ['POST', '/session/$sessionId/elements']]
     
     GET = ['get', ['POST', '/session/$sessionId/url']]
     GET_TITLE = ['getTitle', ['GET', '/session/$sessionId/title']]
     GET_PAGE_SOURCE = ['getPageSource', ['GET', '/session/$sessionId/source']]
+    GET_ELEMENT_TAG_NAME = []
 
     NEW_SESSION = ['session', ['POST', '/session']]
     
