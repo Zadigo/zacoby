@@ -132,7 +132,8 @@ class Service:
             if self.process:
                 try:
                     for stream in streams:
-                        stream.close()
+                        if stream is not None:
+                            stream.close()
                 except Exception:
                     raise
                 else:

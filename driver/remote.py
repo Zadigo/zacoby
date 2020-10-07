@@ -150,6 +150,9 @@ class RemoteConnection:
                 # string to th post request  otherwise this
                 # will raise missing command parameters
                 response = requests.post(url, data=json.dumps(capabilities), headers=headers)
+
+            if method == 'DELETE':
+                response = requests.delete(url)
         except:
             pass
         else:
