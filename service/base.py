@@ -7,6 +7,7 @@ from subprocess import PIPE, Popen
 from urllib.parse import urljoin
 
 import requests
+from zacoby.logging.logger import default_logger
 
 
 class Service:
@@ -29,6 +30,7 @@ class Service:
         self.process = None
         self.host = host
         self.port = port
+        self.logging = default_logger(self.__class__.__name__)
 
         if environ is None:
             environ = os.environ
@@ -57,7 +59,7 @@ class Service:
         else:
             if s:
                 s.close()
-        print('Can still connect', state)
+        default_logger('Service').info(f'The port is up and running ({port})')
         return state
 
     def _process_is_running(self):
@@ -83,11 +85,14 @@ class Service:
         else:
             return True
 
-    def start(self):
+    def start(self, host=None):
         """Start a new service"""
-        print('The service was started')
         log_file = open(os.devnull, 'rb')
         cmd = [self.executable, f'--port={self.port}']
+
+        if host is not None:
+            cmd.extend([f'--host={host}'])
+
         try:
             self.process = Popen(
                 cmd, env=self.environ, 
@@ -105,7 +110,9 @@ class Service:
                 raise
         except Exception:
             raise
-        
+
+        self.logging.info(f'Service started')
+
         count = 0
 
         while True:
@@ -115,14 +122,12 @@ class Service:
             count += 1
             time.sleep(1)
             if count == 5:
-                raise Exception('Cannot connect to service')
-
-            print('Service is running')
+                raise Exception('Could not create a Service instance because the process failed')
 
     def stop(self):
         """Stop the current service"""
-        print('The service was stopped')
         self.shutdown_remote_connection()
+        self.logging.info('Service stopped')
         streams = [
             self.process.stderr,
             self.process.stdin,
@@ -144,7 +149,5 @@ class Service:
         except OSError:
             return False
         else:
+            self.logging.info('Process stopped')
             return True
-
-    def _join_host_port(self, host, port):
-        return f'{host}:{port}'

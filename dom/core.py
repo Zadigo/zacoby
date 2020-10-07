@@ -17,7 +17,9 @@ class DomElement:
     Parameters
     ----------
 
-        parent (type): the parent tag of the element as a class
+        response value (dict, optionnal): a dictionnary container and element ID and value
+        element id (str, optionnal): the element's ID
+        element value (str, optionnal):  the element's value
     """
     def __init__(self, response_value:dict={}, element_id=None, element_value=None):
         if (response_value and 
@@ -51,7 +53,24 @@ class DomElement:
         super().__setattr__(name, value)
 
     def _copy(self, element_id=None, element_value=None, response_value=None):
-        instance = self.__class__(element_id=element_id, element_value=element_value, response_value=response_value)
+        """
+        Create a new element instance
+
+        Parameters
+        ----------
+        
+            element_id (str, optional): a dictionnary container and element ID and value. Defaults to None.
+            element_value (str, optional): the element's ID. Defaults to None.
+            response_value (str, optional): the element's value. Defaults to None.
+
+        Returns:
+            [type]: [description]
+        """
+        instance = self.__class__(
+            element_id=element_id, 
+            element_value=element_value, 
+            response_value=response_value
+        )
         instance.session = self.session
         return instance
 
@@ -62,6 +81,7 @@ class DomElement:
             BrowserCommands.substitute(command, self.session, self.element_id),
             session = self.session
         )
+        return self._copy(response_value=response['value'])
     
     @property
     def is_selected(self):

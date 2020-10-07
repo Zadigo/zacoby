@@ -4,9 +4,10 @@ from string import Template
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
+from zacoby.driver.utils import subsitute_keys
 from zacoby.exceptions import errors
-from zacoby.utils.sockets import (get_available_ip, join_host_and_port,
-                                test_socket_connection)
+from zacoby.logging.logger import default_logger
+from zacoby.utils import sockets
 
 
 class RemoteConnection:
@@ -22,14 +23,15 @@ class RemoteConnection:
     is sent to the browser using a specific command
     based on a W3C compliant path e.g. /get/sessionId
     """
-    url = None
+    # url = None
     parsed_url = None
     remote_server_address = None
     session = None
 
     @classmethod
-    def as_class(cls, remote_server_address):
-        """Create a new RemoteConnection instance
+    def as_class(cls, remote_server_address, resolve_ip=False):
+        """
+        Create a new RemoteConnection instance
 
         Parameters
         ----------
@@ -43,8 +45,41 @@ class RemoteConnection:
             - type: a new instanciated remote connection
         """
         cls.remote_server_address = remote_server_address
-        cls._init(cls)
-        return cls()
+        instance = cls()
+
+        # if cls.remote_server_address is not None:
+        #     parsed_url = urlparse(cls.remote_server_address)
+
+        #     if parsed_url.hostname and resolve_ip:
+        #         port = parsed_url.port or None
+        #         ip_address = None
+
+        #         if parsed_url.scheme == 'https':
+        #             ip_address = parsed_url.hostname
+        #         elif port and not test_socket_connection(parsed_url.hostname, port):
+        #             print('Could not connect to port on host >> LOG')
+        #         else:
+        #             ip_address = get_available_ip(parsed_url.hostname, port=port)
+                
+        #         netloc = join_host_and_port(ip_address, port)
+
+        #         authentication = ''
+        #         if parsed_url.username:
+        #             pass
+                   
+        #         remote_server_address = urlunparse(
+        #             (
+        #                 parsed_url.scheme, 
+        #                 netloc, 
+        #                 parsed_url.path,
+        #                 parsed_url.params, 
+        #                 parsed_url.query,
+        #                 parsed_url.fragment
+        #             )
+        #         )
+        #         cls.url = remote_server_address
+        #         cls.parsed_url = parsed_url
+        return instance
 
     @classmethod
     def _execute_command(cls, command, **kwargs):
@@ -64,15 +99,20 @@ class RemoteConnection:
 
             - dict:  the status code with the reponse data
         """
-        command_name, method_and_path = command
-
-        print("Going to run the following command", command_name, method_and_path)
+        _, method_and_path = command
         
         path = method_and_path[-1]
+
         if 'session' in kwargs:
-            path = cls._implement_session_string(cls, 'sessionId', path, kwargs.pop('session'))
+            # path = cls._implement_session_string(cls, 'sessionId', path, kwargs.pop('session'))
+            path = subsitute_keys(path, {'sessionId': kwargs.pop('session')})
 
         built_url = cls._build_url(cls, path)
+
+        if (not built_url.startswith('http') or
+                built_url.startswith('/')):
+            raise errors.RemoteUrlError(path=built_url)
+
         return cls._request(cls, method_and_path[-0], built_url, **kwargs)
 
     def _get_headers(self, keep_alive=False):
@@ -82,13 +122,14 @@ class RemoteConnection:
             'User-Agent': 'Zacoby (python)'
         }
 
-        if self.parsed_url.username:
-            authentication = f'{self.parsed_url.username}:{self.parsed_url.password}'.encode()
-            base.update(
-                {
-                    'Authorization': f'Basic {authentication}'
-                }
-            )
+        if self.parsed_url is not None:
+            if self.parsed_url.username:
+                authentication = f'{self.parsed_url.username}:{self.parsed_url.password}'.encode()
+                base.update(
+                    {
+                        'Authorization': f'Basic {authentication}'
+                    }
+                )
 
         if keep_alive:
             base.update(
@@ -99,7 +140,7 @@ class RemoteConnection:
 
         return base
 
-    def _request(self, method, url, body:dict = {}, **kwargs):
+    def _request(self, method, url, **kwargs):
         """
         Send an HTTP request to the remote server and
         return a valid response
@@ -121,8 +162,6 @@ class RemoteConnection:
 
             - dict:  the status code with the reponse data
         """
-        print('Trying to send request to', method, 'to', url)
-
         response = None
         headers = self._get_headers(self)
 
@@ -161,6 +200,7 @@ class RemoteConnection:
         except:
             pass
         else:
+            default_logger(None).info(f"{method} request sent to {url}")
             if response is not None:
                 response_data = response.content.decode('utf-8')
                 if 300 <= response.status_code <= 304:
@@ -169,57 +209,59 @@ class RemoteConnection:
                 if 399 < response.status_code <= 500:
                     return dict(status=response.status_code, data=response_data, **response.json())
 
-                print('Sent request to', self.remote_server_address)
-                print('Got response', response_data)
+                # print('Sent request to', self.remote_server_address)
+                # print('Got response', response_data)
+                default_logger(None).info(f'Response processed to: {url}')
                 return dict(status=0, data=response_data, **response.json())
         finally:
             if response is None:
                 raise errors.NoResponseError()
             response.close()
 
-    def _init(self, resolve_ip=True):
-        """Initializes the remote connection in
-        order for it to be used
+    # def _init(self, resolve_ip=False):
+    #     """Initializes the remote connection in
+    #     order for it to be used
 
-        Parameters
-        ----------
+    #     Parameters
+    #     ----------
 
-            resolve_ip (bool, optional): [description]. Defaults to True.
-        """
-        if self.remote_server_address is not None:
-            parsed_url = urlparse(self.remote_server_address)
+    #         resolve_ip (bool, optional): [description]. Defaults to True.
+    #     """
+    #     # if self.remote_server_address is not None:
+    #     #     parsed_url = urlparse(self.remote_server_address)
 
-            if parsed_url.hostname and resolve_ip:
-                port = parsed_url.port or None
-                ip_address = None
+    #     #     if parsed_url.hostname and resolve_ip:
+    #     #         port = parsed_url.port or None
+    #     #         ip_address = None
 
-                if parsed_url.scheme == 'https':
-                    ip_address = parsed_url.hostname
-                elif port and not test_socket_connection(parsed_url.hostname, port):
-                    print('Could not connect to port on host >> LOG')
-                else:
-                    ip_address = get_available_ip(parsed_url.hostname, port=port)
+    #     #         if parsed_url.scheme == 'https':
+    #     #             ip_address = parsed_url.hostname
+    #     #         elif port and not test_socket_connection(parsed_url.hostname, port):
+    #     #             print('Could not connect to port on host >> LOG')
+    #     #         else:
+    #     #             ip_address = get_available_ip(parsed_url.hostname, port=port)
                 
-                netloc = join_host_and_port(ip_address, port)
+    #     #         netloc = join_host_and_port(ip_address, port)
 
-                authentication = ''
-                if parsed_url.username:
-                    pass
+    #     #         authentication = ''
+    #     #         if parsed_url.username:
+    #     #             pass
                    
-                remote_server_address = urlunparse(
-                    (
-                        parsed_url.scheme, 
-                        netloc, 
-                        parsed_url.path,
-                        parsed_url.params, 
-                        parsed_url.query,
-                        parsed_url.fragment
-                    )
-                )
-                self.url = remote_server_address
-                self.parsed_url = parsed_url
+    #     #         remote_server_address = urlunparse(
+    #     #             (
+    #     #                 parsed_url.scheme, 
+    #     #                 netloc, 
+    #     #                 parsed_url.path,
+    #     #                 parsed_url.params, 
+    #     #                 parsed_url.query,
+    #     #                 parsed_url.fragment
+    #     #             )
+    #     #         )
+    #     #         self.url = remote_server_address
+    #     #         self.parsed_url = parsed_url
+    #     pass
     
-    def _build_url(self, path_or_command, session_id=None):
+    def _build_url(self, path_or_command):
         """
         Join the url with W3C complient path
 
@@ -238,12 +280,12 @@ class RemoteConnection:
             path_or_command = path_or_command[-1]
         return urljoin(self.remote_server_address, path_or_command)
 
-    def _implement_session_string(self, key, path:str, value:str):
-        """
-        Some paths need a sesson ID string in order to run and this
-        definition safely substitues that element
-        """
-        try:
-            return Template(path).substitute(**{key: value})
-        except:
-            return path
+    # def _implement_session_string(self, key, path:str, value:str):
+    #     """
+    #     Some paths need a sesson ID string in order to run and this
+    #     definition safely substitues that element
+    #     """
+    #     try:
+    #         return Template(path).substitute(**{key: value})
+    #     except:
+    #         return path

@@ -6,6 +6,7 @@ from zacoby.driver.base import BaseDriver
 class BaseBrowser(DomElementMixins, BaseDriver):
     """Represents a browser"""
 
+
 class Edge(BaseBrowser):
     """Represents the Edge browser"""
     capabilities = browser_capabilities.EDGE

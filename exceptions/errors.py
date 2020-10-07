@@ -25,3 +25,23 @@ class NoResponseError(BaseException):
         super().__init__(
             'The request did not return a response. It returned None'
         )
+
+class RemoteUrlError(BaseException):
+    """
+    Raise an error when the remote url address is not valid
+    """
+    def __init__(self, path=None):
+        super().__init__(
+            f'The remote url address is not valid. Got {path}'
+        )
+
+
+class ElementDoesNotExist(BaseException):
+    """
+    Raise an error when the element on the DOM was
+    not found or does not exist
+    """
+    def __init__(self):
+        super().__init__(
+            'The element does not exist'
+        )

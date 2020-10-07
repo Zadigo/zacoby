@@ -1,5 +1,6 @@
 class LocationStrategies:
-    """ Location strategies are a list of selectors
+    """
+    Location strategies are a list of selectors
     to be used in order to locate elements on the DOM
     """
 

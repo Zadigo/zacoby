@@ -1,10 +1,11 @@
-import socket
 import json
+import socket
 
 from zacoby.browsers.capabilities import CHROME
 from zacoby.driver.remote import RemoteConnection
 from zacoby.driver.wait import Wait
 from zacoby.exceptions import errors
+from zacoby.logging.logger import default_logger
 from zacoby.service.base import Service
 from zacoby.service.commands import BrowserCommands
 
@@ -67,6 +68,8 @@ class BaseDriver(metaclass=Zacoby):
         remote_server_address = f'http://localhost:{self.port}'
         self.new_remote_connection = RemoteConnection.as_class(remote_server_address)
 
+        default_logger(self.__class__.__name__).info('Remote connection created')
+
         self.start_session(self.capabilities, None)
 
     def __repr__(self):
@@ -77,9 +80,6 @@ class BaseDriver(metaclass=Zacoby):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.quit()
-
-    # def _run_command(self, command, **kwargs):
-    #     return self.new_remote_connection._execute_command(command, **kwargs)
 
     def start_session(self, capabilities, browser_profile=None):
         """
@@ -93,11 +93,9 @@ class BaseDriver(metaclass=Zacoby):
 
             - browser_profile (str): [description]
         """
-        if browser_profile:
-            pass
-
         extended_capabilities = self._fit_transform_capabilities(capabilities)
-        print('New session was started using:', extended_capabilities)
+        default_logger(None).info(f"New session started at {self.new_remote_connection.remote_server_address} for {capabilities['browserName']}")
+        # print('New session was started using:', extended_capabilities)
 
         response = self.new_remote_connection._execute_command(
             BrowserCommands.NEW_SESSION, capabilities=extended_capabilities
@@ -122,14 +120,11 @@ class BaseDriver(metaclass=Zacoby):
         Returns:
             dict: a wrapped capabilities object
         """
-        # desired_capabilities = capabilities.copy()
-        # desired_capabilities['platform'] = desired_capabilities['platform'].lower()
         base = {
             'capabilities': {
                 'alwaysMatch': capabilities,
                 'firstMatch': [{}]
             }
-            # 'desiredCapabilities': desired_capabilities
         }
         return base
 
@@ -161,3 +156,12 @@ class BaseDriver(metaclass=Zacoby):
         klass = Wait(self, timeout)
         return klass.start_polling(func)
     
+    def validation(self, *validators, all_of=True):
+        results = []
+        for validator in validators:
+            results.append(validator())
+        if all_of:
+            return all(results)
+        return any(results)
+
+        
