@@ -1,4 +1,5 @@
 import socket
+import json
 
 from zacoby.browsers.capabilities import CHROME
 from zacoby.driver.remote import RemoteConnection
@@ -78,10 +79,7 @@ class BaseDriver(metaclass=Zacoby):
         self.quit()
 
     def _run_command(self, command, **kwargs):
-        response = self.new_remote_connection._execute_command(command, **kwargs)
-        if response:
-            return response
-        return dict(success=0, value=None, sesssion_id=None)
+        return self.new_remote_connection._execute_command(command, **kwargs)
 
     def start_session(self, capabilities, browser_profile=None):
         """
@@ -105,14 +103,12 @@ class BaseDriver(metaclass=Zacoby):
             BrowserCommands.NEW_SESSION, capabilities=extended_capabilities
         )
 
-        if 'sessionId' not in response:
-            pass
-
-        # self.session = response['sessionId']
-        # self.capabilities = response.get('value')
-
-        # if self.capabilities is None:
-        #     self.capabilities = response.get('capabilities')
+        response_value = response.get('value', None)
+        self.session = response_value.get('sessionId', response_value)
+        # Get the new capabilities that was returned
+        # in the response which includes things like
+        # timeouts etc.
+        self.capabilities = response_value.get('capabilities', extended_capabilities)
 
     def _fit_transform_capabilities(self, capabilities:dict, **kwargs):
         """In order to match the W3C capabilities, we have wrap it's values
@@ -146,13 +142,13 @@ class BaseDriver(metaclass=Zacoby):
 
             url (str): a valid url string to get
         """
-        self._run_command(BrowserCommands.GET)
+        self._run_command(BrowserCommands.GET, session=self.session, url_to_get=url)
 
     def quit(self):
         """
         Closes the session, the windows, the driver and the browser
         """
-        self._run_command(BrowserCommands.QUIT)
+        self._run_command(BrowserCommands.QUIT, session=self.session)
         self.new_service.stop()
 
     def wait_until(self, func, timeout, frequency=None):
