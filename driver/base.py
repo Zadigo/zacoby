@@ -71,20 +71,6 @@ class BaseDriver(metaclass=Zacoby):
     def __repr__(self):
         return f'< {self.__class__.__name__} ([{self.session_id}]) >'
 
-    # def __setattr__(self, name, value):
-    #     if name == 'port':
-    #         if value is None or value == 0:
-    #             # If no port was provided,
-    #             # we have to try and find
-    #             # an open port
-    #             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #             s.bind(('0.0.0.0', 0))
-    #             s.listen(5)
-    #             port = s.getsockname()[1]
-    #             s.close()
-    #             value = port
-    #     super().__setattr__(name, value)
-
     def __enter__(self):
         return self
 
@@ -139,8 +125,6 @@ class BaseDriver(metaclass=Zacoby):
 
         Returns:
             dict: a wrapped capabilities object
-
-            {'alwaysMatch': {'browserName': 'MicrosoftEdge', 'platformName': 'windows'}, 'firstMatch': [{}]}
         """
         desired_capabilities = capabilities.pop('desired_capabilities')
         desired_capabilities.update(
