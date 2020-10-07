@@ -1,5 +1,6 @@
 import base64
 import json
+from string import Template
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
@@ -24,6 +25,7 @@ class RemoteConnection:
     url = None
     parsed_url = None
     remote_server_address = None
+    session = None
 
     @classmethod
     def as_class(cls, remote_server_address):
@@ -63,8 +65,15 @@ class RemoteConnection:
             - dict:  the status code with the reponse data
         """
         command_name, method_and_path = command
-        print("Running the following command", command_name, method_and_path)
-        return cls._request(cls, method_and_path[-0], cls._build_url(cls, method_and_path[-1]), **kwargs)
+
+        print("Going to run the following command", command_name, method_and_path)
+        
+        path = method_and_path[-1]
+        if 'session' in kwargs:
+            path = cls._implement_session_string(cls, 'sessionId', path, kwargs.pop('session'))
+
+        built_url = cls._build_url(cls, path)
+        return cls._request(cls, method_and_path[-0], built_url, **kwargs)
 
     def _get_headers(self, keep_alive=False):
         base = {
@@ -120,30 +129,37 @@ class RemoteConnection:
         try:
             capabilities = kwargs.pop('capabilities')
         except:
-            pass
+            capabilities = {}
 
         if 'headers' in kwargs:
             headers = {**headers, **kwargs.pop('headers')}
+
+        if 'url_to_get' in kwargs:
+            capabilities.update({'url': kwargs['url_to_get']})
 
         try:
             if method == 'GET':
                 response = requests.get(url, headers=headers)
 
             if method == 'POST':
+                # NOTE: The capabilities should be passed a
+                # string to th post request  otherwise this
+                # will raise missing command parameters
                 response = requests.post(url, data=json.dumps(capabilities), headers=headers)
         except:
             pass
         else:
             if response is not None:
                 response_data = response.content.decode('utf-8')
-                print('Got response', response_data)
                 if 300 <= response.status_code <= 304:
                     return self._request('GET', response.headers.get('location'))
 
                 if 399 < response.status_code <= 500:
-                    return dict(status=response.status_code, value=response_data)
+                    return dict(status=response.status_code, data=response_data, **response.json())
 
-                return dict(status=0, value=response_data)
+                print('Sent request to', self.remote_server_address)
+                print('Got response', response_data)
+                return dict(status=0, data=response_data, **response.json())
         finally:
             if response is None:
                 raise errors.NoResponseError()
@@ -191,7 +207,7 @@ class RemoteConnection:
                 self.url = remote_server_address
                 self.parsed_url = parsed_url
     
-    def _build_url(self, path_or_command):
+    def _build_url(self, path_or_command, session_id=None):
         """
         Join the url with W3C complient path
 
@@ -209,3 +225,13 @@ class RemoteConnection:
         if isinstance(path_or_command, list):
             path_or_command = path_or_command[-1]
         return urljoin(self.remote_server_address, path_or_command)
+
+    def _implement_session_string(self, key, path:str, value:str):
+        """
+        Some paths need a sesson ID string in order to run and this
+        definition safely substitues that element
+        """
+        try:
+            return Template(path).substitute(**{key: value})
+        except:
+            return path
