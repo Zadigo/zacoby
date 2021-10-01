@@ -224,6 +224,11 @@ class Zacoby(BaseSpider):
         instance = Wait(name, self, timeout=timeout)
         return instance
 
+    def run_sequence(self, sequence: Callable):
+        sequence.driver = self
+        sequence.build_sequences()
+        sequence.resolve()
+
     def pause(self, callback: Callable[[RemoteConnection], RemoteConnection] = None, timeout: int = 10):
         """
         Pause the execution of the driver for a specific
