@@ -77,11 +77,6 @@ class Location(LocationMixin, ScreenShotMixin):
         ------
 
             SelectorExistsError: [description]
-
-        Returns
-        -------
-
-            [type]: [description]
         """
         if attribute == 'id':
             return self.get_element_by_id(name)

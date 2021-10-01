@@ -2,6 +2,7 @@ import re
 from collections import OrderedDict
 from functools import cached_property
 from importlib import import_module
+from zacoby.utils.load_modules import load_module
 from typing import Any
 
 from zacoby.exceptions import CommandExistsError
@@ -88,7 +89,8 @@ class BrowserCommands:
     """
 
     def __init__(self):
-        module = import_module('zacoby.page.commands')
+        # module = import_module('zacoby.page.commands')
+        module = load_module('zacoby.page.commands')
         module_dict = module.__dict__
 
         self._commands = OrderedDict()
