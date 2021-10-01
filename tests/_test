@@ -1,10 +1,4 @@
-import base64
-
-from zacoby import commands
-from zacoby.dom.element import DomElement
-
-
-class LocationStrategies:
+class LocationStrategiesMixin:
     """
     Location strategies are a list of selectors
     to be used in order to locate elements on the DOM
@@ -17,15 +11,17 @@ class LocationStrategies:
         'XPATH_SELECTOR': 'xpath'
     }
 
-    def _build_strategy(self, selector, value, dict_to_update: dict = {}):
-        """Build a new location strategy in order to get an element on the page
+    def _build_strategy(self, selector: str, value: Any, dict_to_update: dict = {}):
+        """
+        Build a new location strategy in order to 
+        get an element on the page
 
         Parameters
         ---------
 
-            selector (str): the type of attribute to get on the page
-            value (str): the value of the attribute to get
-            dict_to_update (dict, optional): An additional dict to return. Defaults to None.
+            - selector (str): the type of attribute to get on the page
+            - value (str): the value of the attribute to get
+            - dict_to_update (dict, optional): An additional dict to return. Defaults to None.
 
         Returns
         -------
@@ -45,10 +41,10 @@ class LocationStrategies:
         return dict_to_update or strategy
 
 
-class ScreenShotMixins:
-    def _screen_shot(self, filename=None, as_file=False, **kwargs):
+class ScreenShotMixin:
+    def _screen_shot(self, filename: str=None, as_file: bool=False, **kwargs):
         response = self.remote_connection._execute_command(
-            commands.SCREENSHOT, session=self.session_id
+            browser_commands.SCREENSHOT, session=self.session_id
         )
         response_value = response.get('value')
         if filename is not None:
@@ -71,30 +67,59 @@ class ScreenShotMixins:
     def screen_shot_as_base64(self):
         pass
 
-class LocationMixins(LocationStrategies):
-    """ A set of various methods that can be used to
-    interact with the DOM
+
+class Location(ScreenShotMixin, LocationStrategiesMixin):
     """
-    dom_element = DomElement()
+    A set of methods that can be used to locate or
+    interract with elemnts on the HTML page
+
+    Parameters
+    ----------
+
+        remote_connection (Type): [description]
+    """
+    SESSION_ID = None
+    dom_element = DomElement
+
+    def __init__(self, remote_connection: Type):
+        self._remote_connection = remote_connection
+        self.SESSION_ID = getattr(self._remote_connection, 'SESSION_ID')
+        self.dom_element = self.dom_element(driver=self._remote_connection)
+
+    @property
+    def window_size(self):
+        pass
 
     @property
     def title(self):
         """
         Return the title of the current HTML document
         """
-        response = self.remote_connection._execute_command(
-            commands.GET_TITLE, session=self.session_id
+        # response = self._remote_connection._execute_command(
+        #     browser_commands.GET_TITLE, session=self.session_id
+        # )
+        response = self._remote_connection.execute_command(
+            browser_commands.GET_TITLE,
+            session=self.SESSION_ID
         )
         return response.get('data', None)
 
     @property
     def html(self):
-        response = self.remote_connection._execute_command(
-            commands.GET_PAGE_SOURCE, session=self.session_id
+        response = self._remote_connection._execute_command(
+            browser_commands.GET_PAGE_SOURCE, session=self.session_id
         )
         return response.get('data')['value']
 
-    def get_element_by(self, selector, name):
+    @property
+    def text(self):
+        """
+        Returns the whole text of the page
+        """
+        response = self._remote_connection._execute_command(browser_commands.TEXT)
+        return response.get('data')['value']
+
+    def get_element_by(self, selector: str, name: str):
         if selector == 'id':
             return self.get_elements_by_id(name)
         elif selector == 'class':
@@ -102,15 +127,15 @@ class LocationMixins(LocationStrategies):
         elif selector == 'tag':
             return self.get_element_by_tag_name(name)
 
-    def get_element_by_tag_name(self, name):
+    def get_element_by_tag_name(self, name: str):
         parameters = self._build_strategy(
             'TAG_NAME', name, dict_to_update={'session': self.session_id}
         )
-        response = self.remote_connection._execute_command(
-            commands.FIND_ELEMENT, **parameters
+        response = self._remote_connection._execute_command(
+            browser_commands.FIND_ELEMENT, **parameters
         )
         return self.dom_element.as_class(
-            response['value'], remote=self.remote_connection
+            response['value'], remote=self._remote_connection
         )
 
     def get_elements_by_tag_name(self, name):
@@ -152,59 +177,20 @@ class LocationMixins(LocationStrategies):
     def get_elements_by_name(self, name, multiple=False):
         pass
 
-    def get_element_text(self, name):
-        pass
-
-
-class DomElementMixins(LocationMixins, ScreenShotMixins):
-    """Regroups all the mixins for the app
-
-    Returns
-    -------
-
-        (dict, str, type): a response dictionnary, a value
-        or a DomElement class instance is returned
-    """
-
-    @property
-    def window_size(self):
-        pass
-
     def back(self):
-        pass
+        return self._remote_connection._execute_command(
+            browser_commands.GO_BACK, session=self.session_id
+        )
 
     def forward(self):
-        pass
+        return self._remote_connection._execute_command(
+            browser_commands.GO_FOWARD, session=self.session_id
+        )
 
     def refresh(self):
-        pass
+        return self._remote_connection._execute_command(
+            browser_commands.REFRESH, session=self.session_id
+        )
 
-    def write_skeleton(self):
-        """
-        From the current element, product a document
-        skeleton that will be rendered as a JSON file.
-
-        Returns
-        -------
-
-            document structure (dict)
-
-            {
-                "html": {
-                    position: 0
-                    attrs: [],
-                    text: ""
-                },
-                "div": {
-                    position 1,
-                    attrs: [],
-                    text: ""
-                },
-                "current_item {
-                    position: 2,
-                    attrs: [],
-                    text: ""
-                }
-            }
-        """
-        pass
+    def as_beautiful_soup(self):
+        return BeautifulSoup(self.html, 'html.parser')

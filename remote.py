@@ -1,19 +1,39 @@
 import json
-from string import Template
+from typing import Callable
 
 import requests
 from w3lib.url import urljoin
-from zacoby import exceptions
-from zacoby.logger import create_default_logger
+
+from zacoby import exceptions, global_logger
+
+
+class Response:
+    def __init__(self, response):
+        self.response = response
+        self.json = response.json
+        self.status = response.status
 
 
 class RemoteConnection:
+    """
+    Class that encapsulates functionnalities for sending
+    requests to the browser
+
+    Raises:
+        ConnectionError: [description]
+        exceptions.NoReponseError: [description]
+
+    Returns:
+        [type]: [description]
+    """
     parsed_url = None
     remote_server_address = None
-    session_id = None
 
-    def __init__(self, remote_server_address, resolve_ip=False):
-        self.logger = create_default_logger(self.__class__.__name__)
+    SESSION_ID = None
+
+    def __init__(self, remote_server_address: str, resolve_ip: bool=False):
+        # signal.connect(self)
+
         self.remote_server_address = remote_server_address
         self.headers = {
             'Accept': 'application/json',
@@ -21,44 +41,33 @@ class RemoteConnection:
             'User-Agent': 'Zacoby (python)'
         }
 
-    def __call__(self, sender, signal):
-        self.session_id = sender.session_id
+    def _execute_command(self, command: Callable, requires_session_id: bool=False, **kwargs):
+        """
+        Send a command to the browser
 
-    def _precheck_command(self, command):
-        if not isinstance(command, list):
-            raise TypeError('The command should be a list')
-        
-        if not isinstance(command[-1], list):
-            raise TypeError('The command carachteristics should be a list')
+        Parameters
+        ----------
 
-        if not command[-1][-1].startswith('/'):
-            raise ValueError(f"{command[-1][-1]} is not a valid path")
+            command (Callable): [description]
 
-        return command
-    
-    def _execute_command(self, command, **kwargs):
-        # A command should contain a name and an additional
-        # list with a http method and a path to which the 
-        # command has to be sent
-        name, characteristics = self._precheck_command(command)
+        Returns
+        -------
 
-        method, path = characteristics
-        if 'session' in kwargs:
-            path_to_substitute = Template(path)
-            session = kwargs.pop('session') or self.session_id
-            path = path_to_substitute.substitute(
-                **{'sessionId': session}
-            )
+            [type]: [description]
+        """
+        # if 'session' in kwargs:
+        if requires_session_id:
+            # self.SESSION_ID = kwargs.pop('session')
+            command.implement_attribute(session_id=self.SESSION_ID)
+            
+        global_logger.info(f'Executing command: {command.name}')
 
-        request_url = urljoin(self.remote_server_address, path)
-        self.logger.info(f'Executing command: {name.title()}')
-        return self._http_request(method, request_url, **kwargs)
+        request_url = urljoin(self.remote_server_address, command.path)
+        return self._http_request(command.method, request_url, **kwargs)
 
     def _http_request(self, method, request_url, **kwargs):
-        kwargs_keys = kwargs.keys()
-
         capabilities = {}
-        if 'capabilities' in kwargs_keys:
+        if 'capabilities' in kwargs:
             # Reconstruct the dictionnary because
             # W3C compliance requires that the key 'capabilities'
             # be in the list of parameters
@@ -74,12 +83,14 @@ class RemoteConnection:
                 capabilities.update({'id': kwargs.pop('element')})
 
         headers = {}
-        if 'headers' in kwargs_keys:
+        if 'headers' in kwargs:
             headers = {**headers, **kwargs.pop('headers')}
         
         response = None
 
         try:
+            # signal.send('Navigate.Before', self)
+            
             if method == 'GET':
                 response = requests.get(request_url, headers=headers)
 
@@ -93,11 +104,17 @@ class RemoteConnection:
 
             if method == 'DELETE':
                 response = requests.delete(request_url)
+        except ConnectionError:
+            raise
         except Exception as e:
-            raise ConnectionError('Could not send request to the browser', e.args)
+            message = 'Could not send request to the browser'
+            global_logger.error(message, stack_info=True)
+            raise ConnectionError(message, e.args)
         else:
             if response is not None:
                 response_data = response.content.decode('utf-8')
+
+                # signal.send('Navigate.After', sender=self, method=method, request_url=request_url)
 
                 if 300 <= response.status_code <= 304:
                     return self._request('GET', response.headers.get('location'))
@@ -105,7 +122,7 @@ class RemoteConnection:
                 try:
                     response_json = response.json()
                 except json.JSONDecodeError:
-                    self.logger.error('Response does not contain a JSON object')
+                    global_logger.error('Response does not contain a JSON object')
                     # Technically a valid response should return a JSON
                     # object containing stuff such as the capabilities,
                     # the session ID etc
@@ -117,5 +134,6 @@ class RemoteConnection:
                     return dict(status=response.status_code, data=response_data, **response_json)
         finally:
             if response is None:
+                global_logger.error('No response was returned.', stack_info=True)
                 raise exceptions.NoReponseError()
             response.close()

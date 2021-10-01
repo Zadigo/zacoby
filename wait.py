@@ -1,36 +1,38 @@
 import time
+from threading import Timer
+from typing import Callable
 
-from zacoby.exceptions import ElementDoesNotExist
-from zacoby.logger import create_default_logger
-from zacoby.pipeline import Pipeline
+from pydispatch import dispatcher
+
+from zacoby import global_logger
+from zacoby.exceptions import ElementDoesNotExist, MethodError
+# from zacoby.pipeline import Pipeline
+from zacoby.settings import lazy_settings
+from zacoby.signals import signal
 
 
-class Wait:
-    def __init__(self, name, driver, timeout=10):
-        self.logger = create_default_logger(self.__class__.__name__)
+class DriverMixin:
+    def __init__(self, driver: Callable, timeout: int):
         self.driver = driver
         self.timeout = timeout
+        # signal.send(dispatcher.Any, self, timeout=timeout)
+
+
+class Wait(DriverMixin):
+    def __init__(self, name: str, driver: Callable, timeout: int=10):
+        super().__init__(driver, timeout)
         self.name = name
         self.exceptions = []
 
-    def __call__(self, sender, signal):
-        self.driver = sender
-        self.timeout = 10
-
-    def _start_polling(self, func, name):
-        end_time = sum(
-            [time.time(), self.timeout]
-        )
-        self.logger.info('Entering sleep mode...')
+    def _start_polling(self, func, **kwargs):
+        result = None
+        end_time = sum([time.time(), self.timeout])
+        global_logger.info(f'Waiting for element [{self.name}] ({self.timeout}s)...')
         while True:
             try:
-                if isinstance(func, Pipeline):
-                    func.resolve(self.driver, name)
-                    result = func.resolved_to_true
-                else:
-                    result = func(self.driver, name)
+                result = func(driver=self.driver, **kwargs)
             except:
-                self.exceptions.append('Exception')
+                raise
             else:
                 return result
             finally:
@@ -39,19 +41,40 @@ class Wait:
                     break
         # raise TimeoutError()
 
-    def until(self, func):
-        self._start_polling(func, self.name)
+    def until(self, func: Callable, **kwargs):
+        self._start_polling(func, **kwargs)
         return self
     
-    def until_not(self, func):
+    def until_not(self, func: Callable):
         self._start_polling(func, self.name)
         return self
 
-
-class Pause:
-    def __init__(self, driver, timeout=10):
-        self.driver = driver
-    
-    def _start_pause(self):
-        while True:
+    def chains(self, *funcs: Callable, method='until'):
+        authorized_methods = ['until', 'until_not']
+        if method not in authorized_methods:
+            raise MethodError()
+        for func in funcs:
             pass
+
+    def logical_map(self, methods: dict):
+        container = []
+        for key, method in methods.items():
+            container.append(method())
+        return self
+
+
+class Pause(DriverMixin):
+    def _start_pause(self, callback = None):
+        result = []
+        if callback is not None:
+            if not callable(callback):
+                raise TypeError('Callback should be a callable')
+            timer = Timer(self.timeout, function=callback, kwargs={'driver': self.driver, 'result': result})
+        else:
+            timer = Timer(self.timeout, function=lambda: True)
+        timer.start()
+        global_logger.info(f'Entering sleep mode for {self.timeout}s')
+        timer.join()
+        if not timer.is_alive():
+            timer.cancel()
+        return result if result else None

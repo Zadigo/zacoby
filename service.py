@@ -1,16 +1,23 @@
 import errno
 import os
-import socket
 import platform
+import socket
 from subprocess import PIPE, Popen
-from zacoby.logger import create_default_logger
-from zacoby import exceptions
-from zacoby.signals import signal
+
+from pydispatch import dispatcher
+
+from zacoby import exceptions, global_logger
+
+# from zacoby.signals import signal
 
 
 class Service:
-    def __init__(self, executable_or_dir, host, port, filename=None, environ=None):
-        self.logger = create_default_logger(self.__class__.__name__)
+    """
+    Class that creates a new service by running the
+    the executable.
+    """
+    def __init__(self, executable_or_dir, host: str, 
+                 port: int, filename: str=None, environ: dict=None):
         if not os.path.exists(executable_or_dir):
             raise FileNotFoundError(f"Could not find the driver on path {executable_or_dir}")
 
@@ -32,29 +39,20 @@ class Service:
         self.port = port
         self.environ = environ or os.environ
         self.process = None
-        self.logger.info('Service started...')
-
-    # def __call__(self, sender, signal, name=None, **kwargs):
-    #     print('The browser was opened at:', sender.host, sender.port)
-    #     if name == 'start':
-    #         if self.host is None:
-    #             self.host = sender.host
-    #         self.start()
-
-    #     if name == 'stop':
-    #         return self.stop()
+        # signal.send(signal=dispatcher.Any, sender=self)
+        global_logger.info('Service configured...')
 
     # NOTE: Cuts off the service before
     # doing anything like get requests
-    # def __del__(self):
-    #     self.stop()
-    #     self.logger.info('Service terminated')
+    def __del__(self):
+        print('Service terminated')
+        # self.stop()
+        # logger.info('Service terminated')
 
     def _poll_process_is_running(self):
         code = self.process.poll()
         if code is not None:
             raise Exception('The service was exited')
-        print(code)
 
     def _can_sill_connect(self, host='localhost'):
         try:
@@ -66,70 +64,74 @@ class Service:
             if s:
                 s.close()
         finally:
-            print(state)
             return state
 
-    def start(self, host=None):
-        host = host or self.host
+    def start(self, host=None, debug_mode=False):
+        print('Started service')
+        # host = host or self.host
 
-        cmd = [self.executable, f'--port={self.port}']
-        if self.host is not None:
-            cmd.extend([f"--host={host}"])
+        # cmd = [self.executable, f'--port={self.port}']
+        # if self.host is not None:
+        #     cmd.extend([f"--host={host}"])
  
-        close_fds = True if platform.system() else False
-        log_file = open(os.devnull, 'rb')
+        # close_fds = True if platform.system() else False
+        # log_file = open(os.devnull, 'rb')
 
-        try:
-            process = Popen(
-                cmd, env=self.environ,
-                    close_fds=close_fds,
-                        stdout=log_file, stderr=log_file, stdin=PIPE
-            )
-        except TypeError:
-            raise
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                raise Exception('The executable could not be accessed')
-            if e.errno == errno.EACCES:
-                raise Exception(
-                    'Does the executable have the appropritate access rights?')
-            raise exceptions.ServiceError()
-        except Exception:
-            raise exceptions.ServiceError()
-        else:
-            self.process = process
+        # if not debug_mode:
+        #     try:
+        #         process = Popen(
+        #             cmd, env=self.environ,
+        #                 close_fds=close_fds,
+        #                     stdout=log_file, stderr=log_file, stdin=PIPE
+        #         )
+        #     except TypeError:
+        #         raise
+        #     except OSError as e:
+        #         if e.errno == errno.ENOENT:
+        #             raise Exception('The executable could not be accessed')
+        #         if e.errno == errno.EACCES:
+        #             raise Exception(
+        #                 'Does the executable have the appropritate access rights?')
+        #         raise exceptions.ServiceError()
+        #     except Exception:
+        #         raise exceptions.ServiceError()
+        #     else:
+        #         self.process = process
 
-        count = 0
+        #     count = 0
 
-        while True:
-            self._poll_process_is_running()
-            if self._can_sill_connect():
-                break
-            count += 1
-            if count == 5:
-                raise Exception('Could not create a new service instance because the process broke')
+        #     while True:
+        #         self._poll_process_is_running()
+        #         if self._can_sill_connect():
+        #             break
+        #         count += 1
+        #         if count == 5:
+        #             raise Exception('Could not create a new service instance because the process broke')
+        # else:
+        #     global_logger.warn('You are running the spider in DEBUG mode')
 
     def stop(self):
-        if self.process is not None:
-            streams = [
-                self.process.stderr,
-                self.process.stdin,
-                self.process.stdout
-            ]
+        print('Stopped service')
+        # if self.process is not None:
+        #     streams = [
+        #         self.process.stderr,
+        #         self.process.stdin,
+        #         self.process.stdout
+        #     ]
 
-            for stream in streams:
-                if stream is not None:
-                    try:
-                        try:
-                            stream.close()
-                        except Exception as e:
-                            raise
-                        else:
-                            self.process.terminate()
-                            self.process.wait()
-                            self.process.kill()
-                            self.process = None
-                    except OSError:
-                        return False
-                    else:
-                        return True
+        #     for stream in streams:
+        #         if stream is not None:
+        #             try:
+        #                 try:
+        #                     stream.close()
+        #                 except Exception as e:
+        #                     raise
+        #                 else:
+        #                     self.process.terminate()
+        #                     self.process.wait()
+        #                     self.process.kill()
+        #                     self.process = None
+        #             except OSError:
+        #                 return False
+        #             else:
+        #                 return True

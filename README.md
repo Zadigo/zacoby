@@ -8,17 +8,17 @@ The simple example below will simply just open your web browser.
 
 ```
 import os
-from zacoby.browsers.list import Edge
+from zacoby.browsers import Edge
 
 os.environ.setdefault("EDGE_DRIVER", "path/to/driver.exe")
 
-driver = Edge(os.environ.get("EDGE_DRIVER"))
+driver = Edge(os.environ.get('EDGE_DRIVER'))
 ```
 
 ## Going to a specific address
 
 ```
-driver.get("http://example.com")
+driver.get('http://example.com')
 ```
 
 ## Interacting with the page
@@ -36,11 +36,10 @@ Each of these methods return a DomElement instance object on which you can also 
 ### Find an element by its ID 
 
 ```
-element = driver.get_element_by_id("id name")
+element = driver.get_element_by_id('id')
 ```
 
 ## Interacting with the DOM elements
-
 
 Now, suppose you've found a given element on the DOM and want to do something with it. Then you can easily do any of these methods.
 
