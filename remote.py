@@ -16,7 +16,7 @@ class Response:
         self.json = {'a': 1}
         self.status = 200
         self.kwargs = kwargs
-
+        
     def __str__(self):
         return self.response_data
 
@@ -64,11 +64,6 @@ class RemoteConnection:
         ----------
 
             command (Callable): [description]
-
-        Returns
-        -------
-
-            [type]: [description]
         """
         # if 'session' in kwargs:
         if requires_session_id:

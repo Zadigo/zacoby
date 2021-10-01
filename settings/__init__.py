@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from pydispatch import dispatcher
 from zacoby.utils.functionnal import LazyObject
-from zacoby.signals import signal
+# from zacoby.signals import signal
 
 
 class Settings:
@@ -35,7 +35,7 @@ class Settings:
         # Alert all middlewares and registered
         # signals on Any that the settings
         # have changed
-        signal.send(dispatcher.Any, self)
+        # signal.send(dispatcher.Any, self)
         return self._settings
 
     def __str__(self):

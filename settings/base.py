@@ -6,13 +6,9 @@ DEBUG = True
 
 PROJECT_DIRECTORY = None
 
-# The spiders to run within the project.
-# All registered spiders will be exectued.
 
-SPIDERS = []
-
-
-# List of browser capabilities
+# List of browser capabilities to use with
+# the project
 
 CAPABILITIES = {
     'CHROME': {
@@ -27,3 +23,6 @@ CAPABILITIES = {
     }
 }
 
+USE_TZ = True
+
+TIMEZONE = 'America/Chicago'

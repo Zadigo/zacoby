@@ -2,7 +2,6 @@ import socket
 from typing import Callable
 from wait import Pause
 
-# import remote
 from zacoby import exceptions, global_logger
 from zacoby.browsers.capabilities import CHROME
 from zacoby.page import browser_commands
@@ -10,7 +9,7 @@ from zacoby.page.navigation import Location
 from zacoby.remote import RemoteConnection
 from zacoby.service import Service
 from zacoby.settings import lazy_settings
-from zacoby.signals import signal
+# from zacoby.signals import signal
 from zacoby.wait import Wait
 
 
@@ -53,7 +52,7 @@ class BaseSpider(metaclass=Base):
             self._new_session()            
             self.manager = Location(remote_connection=self.remote_connection)
 
-        signal.send(sender=self, remote_connection=self.remote_connection)
+        # signal.send(sender=self, remote_connection=self.remote_connection)
 
         # self.listeners = None
 

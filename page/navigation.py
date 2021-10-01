@@ -1,5 +1,6 @@
 from typing import Callable
 
+from bs4 import BeautifulSoup
 from zacoby.exceptions import SelectorExistsError
 from zacoby.page import browser_commands
 from zacoby.page.element import DomElement
@@ -26,25 +27,28 @@ class Location(LocationMixin, ScreenShotMixin):
         response = self.remote_connection._execute_command(command, requires_session_id=True)
         return response.data
 
-    # @property
-    # def html(self):
-    #     response = self._remote_connection._execute_command(
-    #         browser_commands.GET_PAGE_SOURCE, session=self.session_id
-    #     )
-    #     return response.get('data')['value']
+    @property
+    def html(self):
+        pass
+        # response = self._remote_connection._execute_command(
+        #     browser_commands.GET_PAGE_SOURCE, session=self.session_id
+        # )
+        # return response.get('data')['value']
 
-    # @property
-    # def text(self):
-    #     """
-    #     Returns the whole text of the page
-    #     """
-    #     response = self._remote_connection._execute_command(
-    #         browser_commands.TEXT)
-    #     return response.get('data')['value']
+    @property
+    def text(self):
+        pass
+        # response = self._remote_connection._execute_command(
+        #     browser_commands.TEXT)
+        # return response.get('data')['value']
 
-    # @property
-    # def window_size(self):
-    #     pass
+    @property
+    def window_size(self):
+        pass
+
+    @property
+    def beautiful_soup(self):
+        return BeautifulSoup(self.html, 'html.parser')
 
     def _send_command_to_remote(self, command, requires_session_id=False, **strategy):
         attrs = {
@@ -145,20 +149,19 @@ class Location(LocationMixin, ScreenShotMixin):
     # def get_elements_by_name(self, name, multiple=False):
     #     pass
 
-    # def back(self):
-    #     return self._remote_connection._execute_command(
-    #         browser_commands.GO_BACK, session=self.session_id
-    #     )
+    def back(self):
+        self.remote_connection._execute_command('go_back', requires_session_id=True)
+        # return self._remote_connection._execute_command(
+        #     browser_commands.GO_BACK, session=self.session_id
+        # )
 
-    # def forward(self):
-    #     return self._remote_connection._execute_command(
-    #         browser_commands.GO_FOWARD, session=self.session_id
-    #     )
+    def forward(self):
+        self.remote_connection._execute_command('go_foward', requires_session_id=True)
+        # return self._remote_connection._execute_command(
+        #     browser_commands.GO_FOWARD, session=self.session_id
+        # )
 
     # def refresh(self):
     #     return self._remote_connection._execute_command(
     #         browser_commands.REFRESH, session=self.session_id
     #     )
-
-    # def as_beautiful_soup(self):
-    #     return BeautifulSoup(self.html, 'html.parser')

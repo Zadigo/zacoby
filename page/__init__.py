@@ -2,9 +2,9 @@ import re
 from collections import OrderedDict
 from functools import cached_property
 from importlib import import_module
-from zacoby.exceptions import CommandExistsError
 from typing import Any
 
+from zacoby.exceptions import CommandExistsError
 
 SESSION_ID_PATTERN = re.compile(r'(\$sessionId)')
 
@@ -15,7 +15,9 @@ class Command:
     """
     Represents a browser command
 
-    Args:
+    Parameters
+    ----------
+
         name (str): command name
         command (list): command attributes containing a method and a path
     """
@@ -69,8 +71,8 @@ class Command:
         Parameters
         ----------
 
-            - session_id (str, optional): [description]. Defaults to None.
-            - element_id (str, optional): [description]. Defaults to None.
+            session_id (str, optional): [description]. Defaults to None.
+            element_id (str, optional): [description]. Defaults to None.
         """
         if session_id is not None:
             self.path = SESSION_ID_PATTERN.sub(session_id, self.path)
@@ -83,14 +85,6 @@ class BrowserCommands:
     """
     Contains all the commands that can be sent to the
     browser from the commands module.
-
-    Raises:
-        TypeError: [description]
-        TypeError: [description]
-        ValueError: [description]
-
-    Returns:
-        [type]: [description]
     """
 
     def __init__(self):
@@ -126,5 +120,6 @@ class BrowserCommands:
             return getattr(self, name)
         except AttributeError:
             raise CommandExistsError(name)
+
 
 browser_commands = BrowserCommands()
