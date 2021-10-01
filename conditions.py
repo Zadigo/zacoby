@@ -1,5 +1,5 @@
-from zacoby.decorators import require_DRIVER
 from zacoby.exceptions import ElementDoesNotExist
+from zacoby.utils.decorators import require_DRIVER
 
 
 @require_DRIVER

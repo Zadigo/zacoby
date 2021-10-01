@@ -1,5 +1,6 @@
 import socket
 from typing import Callable
+from wait import Pause
 
 # import remote
 from zacoby import exceptions, global_logger
@@ -19,7 +20,8 @@ class Base(type):
         if bases:
             capabilities = attrs.get('capabilities', None)
             if capabilities is None:
-                attrs.update({'capabilities': CHROME})
+                # attrs.update({'capabilities': CHROME})
+                attrs.update({'capabilities': lazy_settings.CAPABILITIES.get('CHROME')})
         return new_class(cls, name, bases, attrs)
 
 
@@ -163,6 +165,20 @@ class BaseSpider(metaclass=Base):
         command = browser_commands.get_command('get')
         self.remote_connection._execute_command(command, requires_session_id=True, url=url)
 
+    def conditional_get(self, url: str, default: str=None):
+        """Navigate to an url and if it fails try a default"""
+        command = browser_commands.get_all_commands('get')
+        command_execution = self.remote_connection._execute_command
+
+        attrs = {
+            'command': command,
+            'requires_session_id': True
+        }
+        try:
+            command_execution(**attrs, url=url)
+        except:
+            command_execution(**attrs, url=default)
+
     def quit(self, callback: Callable=None):
         command = browser_commands.get_command('quit')
         self.remote_connection._execute_command(command, requires_session_id=True)
@@ -205,32 +221,23 @@ class Zacoby(BaseSpider):
 
             name (str): the element's name
             timeout (int, optional): waiting time. Defaults to 10.
-
-        Returns
-        -------
-
-            instance: Wait instance
         """
         instance = Wait(name, self, timeout=timeout)
         return instance
 
-    # def pause(self, callback: Callable[[RemoteConnection], RemoteConnection] = None, timeout: int = 10):
-    #     """
-    #     Pause the execution of the driver for a specific
-    #     period of time
+    def pause(self, callback: Callable[[RemoteConnection], RemoteConnection] = None, timeout: int = 10):
+        """
+        Pause the execution of the driver for a specific
+        period of time
 
-    #     Parameters
-    #     ----------
+        Parameters
+        ----------
 
-    #         callback (callable, optional): a function to call after the pause. Defaults to None.
-    #         timeout (int, optional): pause duration in seconds. Defaults to 10.
+            callback (callable, optional): a function to call after the pause. Defaults to None.
+            timeout (int, optional): pause duration in seconds. Defaults to 10.
 
-    #     Returns
-    #     -------
-
-    #         any: [description]
-    #     """
-    #     instance = Pause(self, timeout=timeout)
-    #     instance._start_pause(callback=callback)
-    #     return instance
+        """
+        instance = Pause(self, timeout=timeout)
+        instance._start_pause(callback=callback)
+        return instance
     

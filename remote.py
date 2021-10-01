@@ -8,23 +8,38 @@ from zacoby import exceptions, global_logger
 
 
 class Response:
-    def __init__(self, response):
-        self.response = response
-        self.json = response.json
-        self.status = response.status
+    def __init__(self, response, **kwargs):
+        self._response = response
+        # self.json = response.json()
+        # self.response_data = response.content.decode('utf-8)
+        self.response_data = {'data': ''}
+        self.json = {'a': 1}
+        self.status = 200
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return self.response_data
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.response_data})'
+
+    def __getitem__(self, key):
+        return self.json[key]
+
+    @property
+    def data(self):
+        return self.response_data['data']
+
+    def decompose(self):
+        keys = list(self.json.keys())[0]
+        value = list(self.json.values())[0]
+        return keys, value
 
 
 class RemoteConnection:
     """
     Class that encapsulates functionnalities for sending
     requests to the browser
-
-    Raises:
-        ConnectionError: [description]
-        exceptions.NoReponseError: [description]
-
-    Returns:
-        [type]: [description]
     """
     parsed_url = None
     remote_server_address = None
@@ -87,53 +102,54 @@ class RemoteConnection:
             headers = {**headers, **kwargs.pop('headers')}
         
         response = None
-
-        try:
-            # signal.send('Navigate.Before', self)
+        # return dict(status=200, data={}, response_json=None)
+        return Response(response, method=method, request_url=request_url)
+        # try:
+        #     # signal.send('Navigate.Before', self)
             
-            if method == 'GET':
-                response = requests.get(request_url, headers=headers)
+        #     if method == 'GET':
+        #         response = requests.get(request_url, headers=headers)
 
-            if method == 'POST':
-                # IMPORTANT: The capabilities should be passed as a
-                # string to the POST request otherwise the service
-                # will raise a missing command parameters error
-                response = requests.post(
-                    request_url, data=json.dumps(capabilities), headers=headers
-                )
+        #     if method == 'POST':
+        #         # IMPORTANT: The capabilities should be passed as a
+        #         # string to the POST request otherwise the service
+        #         # will raise a missing command parameters error
+        #         response = requests.post(
+        #             request_url, data=json.dumps(capabilities), headers=headers
+        #         )
 
-            if method == 'DELETE':
-                response = requests.delete(request_url)
-        except ConnectionError:
-            raise
-        except Exception as e:
-            message = 'Could not send request to the browser'
-            global_logger.error(message, stack_info=True)
-            raise ConnectionError(message, e.args)
-        else:
-            if response is not None:
-                response_data = response.content.decode('utf-8')
+        #     if method == 'DELETE':
+        #         response = requests.delete(request_url)
+        # except ConnectionError:
+        #     raise
+        # except Exception as e:
+        #     message = 'Could not send request to the browser'
+        #     global_logger.error(message, stack_info=True)
+        #     raise ConnectionError(message, e.args)
+        # else:
+        #     if response is not None:
+        #         response_data = response.content.decode('utf-8')
 
-                # signal.send('Navigate.After', sender=self, method=method, request_url=request_url)
+        #         # signal.send('Navigate.After', sender=self, method=method, request_url=request_url)
 
-                if 300 <= response.status_code <= 304:
-                    return self._request('GET', response.headers.get('location'))
+        #         if 300 <= response.status_code <= 304:
+        #             return self._request('GET', response.headers.get('location'))
 
-                try:
-                    response_json = response.json()
-                except json.JSONDecodeError:
-                    global_logger.error('Response does not contain a JSON object')
-                    # Technically a valid response should return a JSON
-                    # object containing stuff such as the capabilities,
-                    # the session ID etc
-                    return {'value': None}
-                else:
-                    if 399 < response.status_code <= 500:
-                        return dict(status=response.status_code, data=response_data, **response_json)
+        #         try:
+        #             response_json = response.json()
+        #         except json.JSONDecodeError:
+        #             global_logger.error('Response does not contain a JSON object')
+        #             # Technically a valid response should return a JSON
+        #             # object containing stuff such as the capabilities,
+        #             # the session ID etc
+        #             return {'value': None}
+        #         else:
+        #             if 399 < response.status_code <= 500:
+        #                 return dict(status=response.status_code, data=response_data, **response_json)
                     
-                    return dict(status=response.status_code, data=response_data, **response_json)
-        finally:
-            if response is None:
-                global_logger.error('No response was returned.', stack_info=True)
-                raise exceptions.NoReponseError()
-            response.close()
+        #             return dict(status=response.status_code, data=response_data, **response_json)
+        # finally:
+        #     if response is None:
+        #         global_logger.error('No response was returned.', stack_info=True)
+        #         raise exceptions.NoReponseError()
+        #     response.close()

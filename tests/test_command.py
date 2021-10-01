@@ -1,5 +1,5 @@
 import unittest
-from zacoby.dom import Command, browser_commands
+from zacoby.page import Command, browser_commands
 
 class TestCommand(unittest.TestCase):
     def setUp(self):

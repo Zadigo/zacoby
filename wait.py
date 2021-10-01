@@ -7,7 +7,7 @@ from pydispatch import dispatcher
 from zacoby import global_logger
 from zacoby.exceptions import ElementDoesNotExist, MethodError
 # from zacoby.pipeline import Pipeline
-from zacoby.settings import lazy_settings
+from zacoby.settings import settings
 from zacoby.signals import signal
 
 
@@ -23,30 +23,34 @@ class Wait(DriverMixin):
         super().__init__(driver, timeout)
         self.name = name
         self.exceptions = []
+        self.results = []
 
     def _start_polling(self, func, **kwargs):
-        result = None
+        # result = None
+        # results = []
         end_time = sum([time.time(), self.timeout])
-        global_logger.info(f'Waiting for element [{self.name}] ({self.timeout}s)...')
+        
+        global_logger.info(f'Waiting for element [{self.name}] - ({self.timeout}s)...')
         while True:
             try:
                 result = func(driver=self.driver, **kwargs)
-            except:
+            except Exception:
                 raise
             else:
-                return result
-            finally:
-                time.sleep(self.timeout)
-                if time.time() > end_time:
-                    break
+                # return result
+                self.results.append(result)
+            
+            time.sleep(self.timeout)
+            if time.time() > end_time:
+                break
         # raise TimeoutError()
 
     def until(self, func: Callable, **kwargs):
         self._start_polling(func, **kwargs)
         return self
     
-    def until_not(self, func: Callable):
-        self._start_polling(func, self.name)
+    def until_not(self, func: Callable, **kwargs):
+        self._start_polling(func, **kwargs)
         return self
 
     def chains(self, *funcs: Callable, method='until'):
@@ -73,7 +77,7 @@ class Pause(DriverMixin):
         else:
             timer = Timer(self.timeout, function=lambda: True)
         timer.start()
-        global_logger.info(f'Entering sleep mode for {self.timeout}s')
+        global_logger.info(f'Entering sleep mode ({self.timeout}s)')
         timer.join()
         if not timer.is_alive():
             timer.cancel()

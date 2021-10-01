@@ -1,6 +1,7 @@
 import unittest
-from zacoby.dom import browser_commands
-from zacoby.dom import Command
+
+from zacoby.page import Command, browser_commands
+
 
 class TestCommands(unittest.TestCase):
     def test_get_command(self):

@@ -23,9 +23,8 @@ class Location(LocationMixin, ScreenShotMixin):
     @property
     def title(self):
         command = browser_commands.get_command('get_title')
-        response = self.remote_connection.\
-                    _execute_command(command, requires_session_id=True)
-        return response.get('data', None)
+        response = self.remote_connection._execute_command(command, requires_session_id=True)
+        return response.data
 
     # @property
     # def html(self):
@@ -48,9 +47,16 @@ class Location(LocationMixin, ScreenShotMixin):
     #     pass
 
     def _send_command_to_remote(self, command, requires_session_id=False, **strategy):
-        response = self.remote_connection.\
-                    _execute_command(command, requires_session_id=requires_session_id, **strategy)
-        return response.get('data', None)
+        attrs = {
+            'command': command,
+            'requires_session_id': requires_session_id,
+            'remote_connection': self.remote_connection,
+            **strategy
+        }
+        response = self.remote_connection._execute_command(**attrs)
+        # return response.get('data', None)
+        # return response.data
+        return response
 
     def get_element_by(self, attribute: str, name: str):
         """
@@ -86,19 +92,19 @@ class Location(LocationMixin, ScreenShotMixin):
         strategy = self._build_strategy('TAG_NAME', name)
         command = browser_commands.get_command('find_element')
         response = self._send_command_to_remote(command, requires_session_id=True, **strategy)
-        return self.dom_element.as_class(response)
+        return self.dom_element.as_class(response, remote_connection=self.remote_connection)
 
     def get_element_by_id(self, name: str):
         strategy = self._build_strategy('CSS_SELECTOR', name)
-        command = browser_commands.get_command('')
+        command = browser_commands.get_command('find_element')
         response = self._send_command_to_remote(command, requires_session_id=True, **strategy)
-        return self.dom_element.as_class(response)
+        return self.dom_element.as_class(response, remote_connection=self.remote_connection)
 
     def get_element_by_class(self, name: str):
         strategy = self._build_strategy('CSS_SELECTOR', name)
-        command = browser_commands.get_command('')
+        command = browser_commands.get_command('find_element')
         response = self._send_command_to_remote(command, requires_session_id=True, **strategy)
-        return self.dom_element.as_class(response)
+        return self.dom_element.as_class(response, remote_connection=self.remote_connection)
         
     # def get_elements_by_tag_name(self, name):
     #     pass

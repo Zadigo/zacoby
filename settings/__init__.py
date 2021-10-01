@@ -2,7 +2,7 @@ import importlib
 from collections import OrderedDict
 
 from pydispatch import dispatcher
-from zacoby._functionnal import LazyObject
+from zacoby.utils.functionnal import LazyObject
 from zacoby.signals import signal
 
 

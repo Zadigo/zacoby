@@ -1,11 +1,3 @@
-"""
-Regroups all the available commands that
-can be sent to the browser.
-
-This is a convinience module which works kind
-of like a dictionnary.
-"""
-
 CLICK_ELEMENT = ['clickElement', ['POST', '/session/$sessionId/element/$elementId/click']]
 CLOSE = ['close', ['DELETE', '/session/$sessionId/window']]
 
@@ -28,11 +20,11 @@ GO_FOWARD = ['goForward', ['POST', '/session/$sessionId/forward']]
 
 IS_ELEMENT_ENABLED = ['isElementEnabled', ['GET', '/session/$sessionId/element/$elementId/enabled']]
 
-REFRESH = ['refresh', ['POST', '/session/$sessionId/refresh']]
-
 NEW_SESSION = ['session', ['POST', '/session']]
 
 QUIT = ['quit', ['DELETE', '/session/$sessionId']]
+
+REFRESH = ['refresh', ['POST', '/session/$sessionId/refresh']]
 
 SCREENSHOT = ['screenshot', ['GET', '/session/$sessionId/screenshot']]
 STATUS = ['GET', ['status', '/status']]

@@ -1,5 +1,5 @@
 import unittest
-from zacoby.dom import mixins
+from zacoby.page import mixins
 from zacoby.remote import RemoteConnection
 
 class TestMixin(unittest.TestCase):

@@ -8,8 +8,6 @@ from pydispatch import dispatcher
 
 from zacoby import exceptions, global_logger
 
-# from zacoby.signals import signal
-
 
 class Service:
     """
