@@ -1,7 +1,7 @@
 import socket
 from typing import Callable
-from wait import Pause
 
+from wait import Pause
 from zacoby import exceptions, global_logger
 from zacoby.browsers.capabilities import CHROME
 from zacoby.page import browser_commands

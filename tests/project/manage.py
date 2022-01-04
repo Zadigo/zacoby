@@ -5,4 +5,3 @@ import os
 
 def execute_command_inline():
     os.eviron.setdefault('ZACOBY_PROJECT_SETTINGS', 'project.settings')
-    print(sys.argv)

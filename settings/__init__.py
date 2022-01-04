@@ -9,11 +9,6 @@ from zacoby.utils.functionnal import LazyObject
 class Settings:
     """ 
     Represents the settings file for the project
-
-    Returns
-    -------
-
-        OrderedDict: [description]
     """
     _settings = OrderedDict()
 

@@ -7,12 +7,14 @@ from subprocess import PIPE, Popen
 from pydispatch import dispatcher
 
 from zacoby import exceptions, global_logger
+from zacoby.settings import lazy_settings
+from zacoby.utils.module_loaders import import_from_module
 
 
 class Service:
     """
-    Class that creates a new service by running the
-    the executable.
+    Creates a new service by running the
+    the executable
     """
     def __init__(self, executable_or_dir, host: str, 
                  port: int, filename: str=None, environ: dict=None):
@@ -133,3 +135,11 @@ class Service:
         #                 return False
         #             else:
         #                 return True
+
+
+def get_default_service_class():
+    try:
+        engine_setting = lazy_settings.SERVICE['default']
+        return import_from_module(engine_setting)
+    except:
+        return Service

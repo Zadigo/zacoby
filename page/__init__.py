@@ -2,7 +2,6 @@ import re
 from collections import OrderedDict
 from functools import cached_property
 from importlib import import_module
-from zacoby.utils.load_modules import load_module
 from typing import Any
 
 from zacoby.exceptions import CommandExistsError
@@ -31,16 +30,6 @@ class Command:
         self.method = self.attrs[0]
         self.path = self.attrs[1]
 
-    def _precheck_attributes(self, command: list):
-        if not isinstance(command, list):
-            raise TypeError('Command should be a list of properties.')
-
-        name, attrs = command
-        if not isinstance(attrs, list):
-            raise TypeError('Command attributes should be a list containing a method and a path')
-
-        return name, attrs
-
     def __str__(self):
         return self.path
 
@@ -62,6 +51,16 @@ class Command:
             self.path == value
         ]
         return any(logic)
+
+    def _precheck_attributes(self, command: list):
+        if not isinstance(command, list):
+            raise TypeError('Command should be a list of properties.')
+
+        name, attrs = command
+        if not isinstance(attrs, list):
+            raise TypeError('Command attributes should be a list containing a method and a path')
+
+        return name, attrs
 
     def implement_attribute(self, session_id: str=None, element_id: str=None):
         """
@@ -89,8 +88,7 @@ class BrowserCommands:
     """
 
     def __init__(self):
-        # module = import_module('zacoby.page.commands')
-        module = load_module('zacoby.page.commands')
+        module = import_module('zacoby.page.commands')
         module_dict = module.__dict__
 
         self._commands = OrderedDict()
@@ -122,6 +120,3 @@ class BrowserCommands:
             return getattr(self, name)
         except AttributeError:
             raise CommandExistsError(name)
-
-
-browser_commands = BrowserCommands()

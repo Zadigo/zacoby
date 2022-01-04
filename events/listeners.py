@@ -42,4 +42,3 @@ class BaseListeners:
         return self._listeners.get(name, None)
 
 listeners = BaseListeners()
-
