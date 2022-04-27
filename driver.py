@@ -1,17 +1,9 @@
 from zacoby.conditions import element_visibility
-from zacoby.remote import RemoteConnection
 from zacoby.page import browser_commands
-from zacoby.wait import Wait
 from zacoby.page.navigation import Location
-
-class Service:
-    def __init__(self, executable_or_dir, spider):
-        self.executable_or_dir = executable_or_dir
-        self.spider = spider
-
-    def start(self):
-        pass
-
+from zacoby.remote import RemoteConnection
+from zacoby.service import Service
+from zacoby.wait import Wait
 
 
 class SpiderOptions:
