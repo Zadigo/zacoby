@@ -120,3 +120,5 @@ class BrowserCommands:
             return getattr(self, name)
         except AttributeError:
             raise CommandExistsError(name)
+
+browser_commands = BrowserCommands()

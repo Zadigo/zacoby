@@ -2,13 +2,8 @@ import time
 from threading import Timer
 from typing import Callable
 
-from pydispatch import dispatcher
-
 from zacoby import global_logger
 from zacoby.exceptions import ElementDoesNotExist, MethodError
-# from zacoby.pipeline import Pipeline
-from zacoby.settings import settings
-from zacoby.signals import signal
 
 
 class DriverMixin:

@@ -3,7 +3,7 @@ from zacoby.utils.decorators import require_DRIVER
 
 
 @require_DRIVER
-def element_located(driver, selector: str, name: str):
+def element_located(driver, selector, name):
     try:
         element = driver.manager.get_element_by(name, selector)
     except AttributeError:
@@ -12,7 +12,7 @@ def element_located(driver, selector: str, name: str):
 
 
 @require_DRIVER
-def element_visibility(driver, selector: str):
+def element_visibility(driver, selector):
     try:
         element = driver.manager.get_element_by(selector)
     except AttributeError:
